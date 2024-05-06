@@ -20,5 +20,5 @@ public class Gif {
     @Id
     private Long id;
     private String type;
-    private String path;
+    private String name;
 }

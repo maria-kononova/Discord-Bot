@@ -9,12 +9,23 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
+import org.springframework.stereotype.Component;
 
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.example.bot.BotApplication.*;
 import static com.example.bot.BotCommands.userRepository;
@@ -196,8 +207,19 @@ public class CrocodileGame extends ListenerAdapter {
     public void getNewWord() {
         try {
             Random random = new Random();
-            int lineNumber = random.nextInt(0, 675); // предел слов в файле
-            word = Files.readAllLines(Paths.get("src/main/resources/static/words.txt")).get(lineNumber);
+           /* Random random = new Random();
+            Resource resource = resourceLoader.getResource("classpath:static/words.txt");
+            BufferedReader reader = new BufferedReader(new InputStreamReader(resource.getInputStream()));
+            word = reader.lines().toList().get(random.nextInt(0, reader.lines().toList().size()));
+            reader.close();*/
+            ClassPathResource resource = new ClassPathResource("static/words.txt");
+            InputStream inputStream = resource.getInputStream();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+            List<String> lines = reader.lines().toList();
+            word = lines.get(random.nextInt(0, lines.size()));
+
+
+            //word = Files.readAllLines(Path.of(this.getClass().getClassLoader().getResource("static/words.txt").getPath())).get(lineNumber);
             //crocodileGame.setRound(crocodileGame.getRound() + 1);
         } catch (IOException e) {
             e.printStackTrace();

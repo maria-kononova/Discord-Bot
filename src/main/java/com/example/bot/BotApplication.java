@@ -13,6 +13,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.core.io.ResourceLoader;
 
 import javax.security.auth.login.LoginException;
 import java.util.HashMap;
@@ -26,6 +27,8 @@ public class BotApplication {
     public static SlashCommandRepository slashCommandRepository;
     public static SlashCommandOptionRepository slashCommandOptionRepository;
     public static CrocodileRepository crocodileRepository;
+
+    public static ResourceLoader resourceLoader;
 
     public static void main(String[] args) throws LoginException, InterruptedException {
         SpringApplication.run(BotApplication.class, args);
@@ -59,8 +62,8 @@ public class BotApplication {
     }
 
     public static void create() throws LoginException, InterruptedException {
-        bot = JDABuilder.createDefault("MTE4MTMyMjcxOTU0ODE0NTY3NA.G_28ZT.hYHIqlMIOekF21lZkLxIxRGVQE2EDHP9ZKy_wU")
-                .setActivity(Activity.competing("кряканье"))
+        bot = JDABuilder.createDefault("MTE4MTMyMjcxOTU0ODE0NTY3NA.G6f0-T.EodpJURisNTEKtB-PI4vN1Vnxrxy3WHMMFngx4")
+                .setActivity(Activity.competing("кряканье1"))
                 .setMemberCachePolicy(MemberCachePolicy.ALL)
                 .enableIntents(GatewayIntent.MESSAGE_CONTENT)
                 .setChunkingFilter(ChunkingFilter.ALL) // enable member chunking for all guilds
@@ -74,12 +77,13 @@ public class BotApplication {
 
 
     @Bean
-    public CommandLineRunner update(UserRepository repository, SlashCommandRepository slashCommandRepository_, SlashCommandOptionRepository slashCommandOptionRepository_, CrocodileRepository crocodileRepository_) {
+    public CommandLineRunner update(UserRepository repository, SlashCommandRepository slashCommandRepository_, SlashCommandOptionRepository slashCommandOptionRepository_, CrocodileRepository crocodileRepository_, ResourceLoader resourceLoader_) {
         return (args) -> {
             userRepository = repository;
             slashCommandRepository = slashCommandRepository_;
             slashCommandOptionRepository = slashCommandOptionRepository_;
             crocodileRepository = crocodileRepository_;
+            resourceLoader = resourceLoader_;
         };
     }
 }

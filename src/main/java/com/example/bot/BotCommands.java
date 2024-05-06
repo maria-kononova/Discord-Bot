@@ -38,11 +38,6 @@ public class BotCommands extends ListenerAdapter {
 
     @Override
     public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
-        System.out.println(slashCommandRepository.findAll().size());
-        for (SlashCommand slashCommand : slashCommandRepository.findAll()){
-            System.out.println(slashCommand.getName());
-        }
-            System.out.println(event.getName());
         SlashCommand slashCommand = slashCommandRepository.getByName(event.getName());
         switch (slashCommand.getType().getName()) {
             case ("Взаимодействие"): {
@@ -53,7 +48,7 @@ public class BotCommands extends ListenerAdapter {
                 if (gif.size() != 0) {
                     //добавление gif
                     Random random = new Random();
-                    File file = new File(gif.get(random.nextInt(0, gif.size())).getPath());
+                    File file = new File(gif.get(random.nextInt(0, gif.size())).getName());
                     FileUpload fileUpload = FileUpload.fromData(file);
                     event.getHook().sendMessage("<@" + user + "> " + slashCommand.getReply() + " <@" + tagUserId + ">").addFiles(fileUpload).setEphemeral(true).queue();
                 } else {
