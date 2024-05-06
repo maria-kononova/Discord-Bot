@@ -38,6 +38,11 @@ public class BotCommands extends ListenerAdapter {
 
     @Override
     public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
+        System.out.println(slashCommandRepository.findAll().size());
+        for (SlashCommand slashCommand : slashCommandRepository.findAll()){
+            System.out.println(slashCommand.getName());
+        }
+            System.out.println(event.getName());
         SlashCommand slashCommand = slashCommandRepository.getByName(event.getName());
         switch (slashCommand.getType().getName()) {
             case ("Взаимодействие"): {
@@ -158,8 +163,7 @@ public class BotCommands extends ListenerAdapter {
                             }
 
                             event.deferReply(true).setContent(slashCommand.getReply() + "\nБыло удалено сообщений: " + countMessage).queue();
-                        }
-                        else{
+                        } else {
                             event.deferReply(true).setContent("Код неверный").queue();
                         }
                         break;
