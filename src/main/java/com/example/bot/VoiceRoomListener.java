@@ -4,7 +4,10 @@ import com.example.bot.entity.User;
 import com.example.bot.entity.VoiceChannel;
 import com.example.bot.repository.VoiceChannelRepository;
 import jakarta.validation.constraints.NotNull;
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.PermissionOverride;
+import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.channel.concrete.Category;
 import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent;
@@ -19,17 +22,20 @@ import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import net.dv8tion.jda.api.interactions.modals.Modal;
 import net.dv8tion.jda.api.interactions.modals.ModalMapping;
+import net.dv8tion.jda.api.requests.restaction.AuditableRestAction;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 
 import static com.example.bot.BotApplication.guild;
 import static com.example.bot.BotCommands.userRepository;
+import static com.example.bot.SystemMessage.YOUR_VOICE_ROOM_EDIT;
 
 @Transactional
 @Service
@@ -92,6 +98,27 @@ public class VoiceRoomListener extends ListenerAdapter {
                         event.deferReply(true).setContent("Выберите пользователя для исключения из комнаты").setComponents(ActionRow.of(selectMenu)).queue();
                         break;
                     }
+                    case("close-room-voice1"):{
+                        User host = userRepository.getUserById(Objects.requireNonNull(event.getMember()).getIdLong());
+                        net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel voiceChannel = guild.getVoiceChannelById(getIdChannelByHost(host));
+                        Role everyoneRole = guild.getPublicRole();
+                        long allow = 0; // нет разрешения
+                        long deny = Permission.VOICE_CONNECT.getRawValue(); // запретить подключаться к войс-каналу
+                        voiceChannel.getManager().putPermissionOverride(everyoneRole, allow, deny).queue();
+
+                        event.deferReply(true).setContent("Команатка успешно закрыта").queue();
+                        break;
+                    }
+                    case("open-room-voice1"):{
+                        User host = userRepository.getUserById(Objects.requireNonNull(event.getMember()).getIdLong());
+                        net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel voiceChannel = guild.getVoiceChannelById(getIdChannelByHost(host));
+                        Role everyoneRole = guild.getPublicRole();
+                        long allow = Permission.VOICE_CONNECT.getRawValue(); // разрешить подключаться к войс-каналу
+                        long deny = 0; // нет запрещений
+                        voiceChannel.getManager().putPermissionOverride(everyoneRole, allow, deny).queue();
+                        event.deferReply(true).setContent("Комнатка успешно открыта. Встречай гостей!").queue();
+                        break;
+                    }
                     default:
                         event.deferReply(true).setContent("Работаем над этим вопросом").queue();
                 }
@@ -125,7 +152,6 @@ public class VoiceRoomListener extends ListenerAdapter {
                     int limit = Integer.parseInt(limitUserValue.getAsString());
                     User host = userRepository.getUserById(Objects.requireNonNull(event.getMember()).getIdLong());
                     Long idChannel = getIdChannelByHost(host);
-                    System.out.println(idChannel);
                     net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel voiceChannel = guild.getVoiceChannelById(idChannel);
                     //AudioChannel audioChannel = guild.getVoiceChannelById(idChannel);
                     if (limit >= 0) {
@@ -163,7 +189,7 @@ public class VoiceRoomListener extends ListenerAdapter {
                             voiceChannelRepository.save(voiceChannel);
                             //уведомление пользователя, о том, что он стал хозяином
                             net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel voiceChannel1 = guild.getVoiceChannelById(voiceChannel.getIdChannel());
-                            voiceChannel1.sendMessage("<@" + newHost.getId() + "> новый хозяин команты").queue();
+                            voiceChannel1.sendMessage("<@" + newHost.getId() + "> новый хозяин команты\nДля управления своей комнаткой:\n<#"+ YOUR_VOICE_ROOM_EDIT  + ">").queue();
                             event.deferReply(true).setContent("Владелец комнатки успешно изменён!").queue();
                         } else
                             event.deferReply(true).setContent("Не нашёл такого среди гостей твоей комнатки!").queue();
@@ -247,7 +273,7 @@ public class VoiceRoomListener extends ListenerAdapter {
                     voiceChannelRepository.save(voiceChannel);
                     //сделать уведомление пользователя, о том, что он стал хозяином
                     net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel voiceChannel1 = guild.getVoiceChannelById(audioChannel.getIdLong());
-                    voiceChannel1.sendMessage("<@" + newHost.getId() + "> новый хозяин команты").queue();
+                    voiceChannel1.sendMessage("<@" + newHost.getId() + "> новый хозяин команты\nДля управления своей комнаткой:\n<#"+ YOUR_VOICE_ROOM_EDIT  + ">").queue();
                 }
             }
         }

@@ -2,18 +2,33 @@ package com.example.bot;
 
 import net.dv8tion.jda.api.entities.MessageHistory;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.emoji.CustomEmoji;
+import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
+import net.dv8tion.jda.api.interactions.components.Component;
+import net.dv8tion.jda.api.interactions.components.ItemComponent;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
+import net.dv8tion.jda.internal.entities.emoji.CustomEmojiImpl;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
 
 import static com.example.bot.BotApplication.guild;
 
 public class SystemMessage {
     public static String YOUR_VOICE_ROOM_EDIT = "1181326695408619560";
     public static String CROCODILE_GAME = "1236431656395608074";
+
+    public static String EMOJI_EDIT = "1238476817132949645";
+    public static  String EMOJI_CROWN = "1238478062748700672";
+    public static String EMOJI_USERS = "1238479272063275058";
+    public static String EMOJI_LOCK = "1238486183655374888";
+    public static String EMOJI_OPEN = "1238487354830753863";
+    public static String EMOJI_KICK_USER = "1238488184803823626";
+
 
     //сообщение в чат "твоя-комната", позволяет редактировать свой голосовой канал
     //идентификатор команды 1
@@ -22,20 +37,34 @@ public class SystemMessage {
         TextChannel chatChannel = guild.getTextChannelById(YOUR_VOICE_ROOM_EDIT);
         if (chatChannel != null) {
 
-            Button changeNameButton = Button.of(ButtonStyle.PRIMARY, "change-voice-name1", "Изменить название канала");
-            Button limitUsersButton = Button.of(ButtonStyle.PRIMARY, "change-limit-users-voice1", "Изменить количество пользователей");
-            Button newHostButton = Button.of(ButtonStyle.PRIMARY, "change-host-voice1", "Изменить владельца канала");
-            Button closeOrOpenButton = Button.of(ButtonStyle.SECONDARY, "change-state-voice1", "Закртыть/открыть канал");
-            Button kickUserButton = Button.of(ButtonStyle.SECONDARY, "kick-user-voice1", "Выгнать пользователя");
+        Button changeNameButton = Button.primary("change-voice-name1", Objects.requireNonNull(guild.getEmojiById(EMOJI_EDIT)));//"Изменить название канала");
+            Button limitUsersButton = Button.primary( "change-limit-users-voice1",Objects.requireNonNull(guild.getEmojiById(EMOJI_USERS))); //"Изменить количество пользователей");
+            Button newHostButton = Button.primary("change-host-voice1",Objects.requireNonNull(guild.getEmojiById(EMOJI_CROWN))); //"Изменить владельца канала");
+            Button openRoomButton = Button.secondary("open-room-voice1", Objects.requireNonNull(guild.getEmojiById(EMOJI_OPEN))); //"Открыть канал");
+            Button closeRoomButton = Button.secondary( "close-room-voice1", Objects.requireNonNull(guild.getEmojiById(EMOJI_LOCK))); //"Закртыть канал");
+            Button kickUserButton = Button.secondary("kick-user-voice1", Objects.requireNonNull(guild.getEmojiById(EMOJI_KICK_USER))); //"Выгнать пользователя");
 
-            Collection<ActionRow> actionRows = new ArrayList<>();
-            actionRows.add(ActionRow.of(changeNameButton));
-            actionRows.add(ActionRow.of(newHostButton));
-            actionRows.add(ActionRow.of(limitUsersButton));
-            actionRows.add(ActionRow.of(closeOrOpenButton));
-            actionRows.add(ActionRow.of(kickUserButton));
 
-            chatChannel.sendMessage("Выберите необходимое для управления своей комнатой:").addComponents(actionRows).queue();
+            //Button btn = Button.primary("btn", Emoji.fromCustom(Objects.requireNonNull(guild.getEmojiById("1220809885059645470"))));
+            List<ItemComponent> componentsPrimary = new ArrayList<>();
+            componentsPrimary.add(changeNameButton);
+            componentsPrimary.add(limitUsersButton);
+            componentsPrimary.add(newHostButton);
+            ActionRow actionRowPrimary = ActionRow.of(componentsPrimary);
+
+            List<ItemComponent> componentsSecondary = new ArrayList<>();
+            componentsSecondary.add(openRoomButton);
+            componentsSecondary.add(closeRoomButton);
+            componentsSecondary.add(kickUserButton);
+            ActionRow actionRowSecondary = ActionRow.of(componentsSecondary);
+
+
+            Collection<ActionRow> actionRows1 = new ArrayList<>();
+            actionRows1.add(actionRowPrimary);
+            actionRows1.add(actionRowSecondary);
+
+
+            chatChannel.sendMessage("Выберите необходимое для управления своей комнатой:").addComponents(actionRows1).queue();
         }
     }
 

@@ -63,7 +63,7 @@ public class BotApplication {
 
     public static void create() throws LoginException, InterruptedException {
         bot = JDABuilder.createDefault("MTE4MTMyMjcxOTU0ODE0NTY3NA.G6f0-T.EodpJURisNTEKtB-PI4vN1Vnxrxy3WHMMFngx4")
-                .setActivity(Activity.competing("кряканье1"))
+                .setActivity(Activity.competing("кряканье"))
                 .setMemberCachePolicy(MemberCachePolicy.ALL)
                 .enableIntents(GatewayIntent.MESSAGE_CONTENT)
                 .setChunkingFilter(ChunkingFilter.ALL) // enable member chunking for all guilds
