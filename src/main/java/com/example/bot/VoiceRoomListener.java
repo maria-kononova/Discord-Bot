@@ -74,7 +74,25 @@ public class VoiceRoomListener extends ListenerAdapter {
                                 .setPlaceholder("Наш новый владелец...")
                                 .setRequiredRange(1, 1)
                                 .build();
-                        event.deferReply(true).setContent("Выберите нового владельца своей комнатки из списка").setComponents(ActionRow.of(selectMenu)).queue();
+                        event.deferReply(true).setContent("Выбери нового владельца своей комнатки из списка").setComponents(ActionRow.of(selectMenu)).queue();
+                        break;
+                    }
+                    //пригласить пользователя в комнатку
+                    case ("add-user-voice1"): {
+                        SelectMenu selectMenu = EntitySelectMenu.create("select-add-user-room1", EntitySelectMenu.SelectTarget.USER)
+                                .setPlaceholder("Кому мы высылаем приглашение?")
+                                .setRequiredRange(1, 1)
+                                .build();
+                        event.deferReply(true).setContent("Выбери нового гостя своей комнатки").setComponents(ActionRow.of(selectMenu)).queue();
+                        break;
+                    }
+                    //забрать доступ у пользователя на присоединения к комантке
+                    case ("ban-user-voice1"): {
+                        SelectMenu selectMenu = EntitySelectMenu.create("select-ban-user-room1", EntitySelectMenu.SelectTarget.USER)
+                                .setPlaceholder("Кого же мы не хотим видеть..")
+                                .setRequiredRange(1, 1)
+                                .build();
+                        event.deferReply(true).setContent("Выбери пользователя, у которого мне нужно забрать доступ к твоей комнатке").setComponents(ActionRow.of(selectMenu)).queue();
                         break;
                     }
                     //изменение количества пользователей в голосовом канале
@@ -90,15 +108,17 @@ public class VoiceRoomListener extends ListenerAdapter {
                         event.replyModal(modal).queue();
                         break;
                     }
+                    //выганть пользователя
                     case ("kick-user-voice1"): {
                         SelectMenu selectMenu = EntitySelectMenu.create("select-kick-user-room1", EntitySelectMenu.SelectTarget.USER)
                                 .setPlaceholder("Кто же себя плохо ведёт...")
                                 .setRequiredRange(1, 1)
                                 .build();
-                        event.deferReply(true).setContent("Выберите пользователя для исключения из комнаты").setComponents(ActionRow.of(selectMenu)).queue();
+                        event.deferReply(true).setContent("Выбери пользователя для исключения из комнаты").setComponents(ActionRow.of(selectMenu)).queue();
                         break;
                     }
-                    case("close-room-voice1"):{
+                    //закрыть комнату
+                    case ("close-room-voice1"): {
                         User host = userRepository.getUserById(Objects.requireNonNull(event.getMember()).getIdLong());
                         net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel voiceChannel = guild.getVoiceChannelById(getIdChannelByHost(host));
                         Role everyoneRole = guild.getPublicRole();
@@ -109,7 +129,8 @@ public class VoiceRoomListener extends ListenerAdapter {
                         event.deferReply(true).setContent("Команатка успешно закрыта").queue();
                         break;
                     }
-                    case("open-room-voice1"):{
+                    //открыть команту
+                    case ("open-room-voice1"): {
                         User host = userRepository.getUserById(Objects.requireNonNull(event.getMember()).getIdLong());
                         net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel voiceChannel = guild.getVoiceChannelById(getIdChannelByHost(host));
                         Role everyoneRole = guild.getPublicRole();
@@ -189,7 +210,8 @@ public class VoiceRoomListener extends ListenerAdapter {
                             voiceChannelRepository.save(voiceChannel);
                             //уведомление пользователя, о том, что он стал хозяином
                             net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel voiceChannel1 = guild.getVoiceChannelById(voiceChannel.getIdChannel());
-                            voiceChannel1.sendMessage("<@" + newHost.getId() + "> новый хозяин команты\nДля управления своей комнаткой:\n<#"+ YOUR_VOICE_ROOM_EDIT  + ">").queue();
+                            SystemMessage systemMessage = new SystemMessage();
+                            systemMessage.sendMsgAboutNewHost(voiceChannel1, newUserHost);
                             event.deferReply(true).setContent("Владелец комнатки успешно изменён!").queue();
                         } else
                             event.deferReply(true).setContent("Не нашёл такого среди гостей твоей комнатки!").queue();
@@ -210,7 +232,41 @@ public class VoiceRoomListener extends ListenerAdapter {
                     event.deferReply(true).setContent("Утёнок исключил " + userForKick.getAsMention() + " из твоей комнатки").queue();
                 } else event.deferReply(true).setContent("Не нашёл такого среди гостей твоей комнатки!").queue();
                 break;
-
+            }
+            case ("select-add-user-room1"): {
+                User host = userRepository.getUserById(event.getMember().getIdLong());
+                List values = event.getValues();
+                Member userForAdd = (Member) values.get(0);
+                long idChannel = getIdChannelByHost(host);
+                AudioChannel audioChannel = guild.getVoiceChannelById(idChannel);
+                List<Member> membersInVC = audioChannel.getMembers();
+                if (!membersInVC.contains(userForAdd)) {
+                    long allow = Permission.VOICE_CONNECT.getRawValue(); // разрешить подключаться к войс-каналу
+                    long deny = 0; // нет запрещений
+                    audioChannel.getManager().putPermissionOverride(userForAdd, allow, deny).queue();
+                    event.deferReply(true).setContent("Утёнок пригласил " + userForAdd.getAsMention() + " в твою комнатку").queue();
+                } else event.deferReply(true).setContent("Гость уже приглашён!").queue();
+                break;
+            }
+            case ("select-ban-user-room1"): {
+                User host = userRepository.getUserById(event.getMember().getIdLong());
+                List values = event.getValues();
+                Member userForBan = (Member) values.get(0);
+                long idChannel = getIdChannelByHost(host);
+                net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel voiceChannel = guild.getVoiceChannelById(idChannel);
+                // Проверяем, находится ли пользователь в голосовом канале
+                if (voiceChannel != null) {
+                    long allow = 0; // нет разрешения
+                    long deny = Permission.VOICE_CONNECT.getRawValue(); // запретить подключаться к войс-каналу
+                    voiceChannel.getManager().putPermissionOverride(userForBan, allow, deny).queue();
+                    List<Member> membersInVC = voiceChannel.getMembers();
+                    if(membersInVC.contains(userForBan))
+                    {
+                        voiceChannel.getGuild().kickVoiceMember(userForBan).queue();
+                    }
+                    event.deferReply(true).setContent("Утёнок забрал доступ к комнатке у  " + userForBan.getAsMention()).queue();
+                }
+                break;
             }
             default:
                 event.deferReply(true).setContent("Работаем над этим вопросом").queue();
@@ -273,7 +329,8 @@ public class VoiceRoomListener extends ListenerAdapter {
                     voiceChannelRepository.save(voiceChannel);
                     //сделать уведомление пользователя, о том, что он стал хозяином
                     net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel voiceChannel1 = guild.getVoiceChannelById(audioChannel.getIdLong());
-                    voiceChannel1.sendMessage("<@" + newHost.getId() + "> новый хозяин команты\nДля управления своей комнаткой:\n<#"+ YOUR_VOICE_ROOM_EDIT  + ">").queue();
+                    SystemMessage systemMessage = new SystemMessage();
+                    systemMessage.sendMsgAboutNewHost(voiceChannel1, newHost);
                 }
             }
         }
