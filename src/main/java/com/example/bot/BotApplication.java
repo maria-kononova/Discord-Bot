@@ -18,6 +18,7 @@ import org.springframework.core.io.ResourceLoader;
 import javax.security.auth.login.LoginException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 @SpringBootApplication
 public class BotApplication {
@@ -27,14 +28,16 @@ public class BotApplication {
     public static SlashCommandRepository slashCommandRepository;
     public static SlashCommandOptionRepository slashCommandOptionRepository;
     public static CrocodileRepository crocodileRepository;
+    public static TicketRepository ticketRepository;
 
     public static ResourceLoader resourceLoader;
 
-    public static void main(String[] args) throws LoginException, InterruptedException {
+    public static void main(String[] args) throws LoginException, InterruptedException, ExecutionException {
         SpringApplication.run(BotApplication.class, args);
         create();
         //SystemMessage.sendVoiceControlMessage();
         //SystemMessage.sendCrocodileGameMessage();
+        //SystemMessage.sendTicketMessage();
         CheckServer checkServer = new CheckServer();
         checkServer.checkVoiceChannel();
         System.out.println(checkServer.result);
@@ -67,7 +70,7 @@ public class BotApplication {
                 .setMemberCachePolicy(MemberCachePolicy.ALL)
                 .enableIntents(GatewayIntent.MESSAGE_CONTENT)
                 .setChunkingFilter(ChunkingFilter.ALL) // enable member chunking for all guilds
-                .addEventListeners(new BotCommands(), new ButtonListener(), new DeleteMessageListener(), new VoiceRoomListener(), new MessageListener(), new CrocodileGame())
+                .addEventListeners(new BotCommands(), new ButtonListener(), new DeleteMessageListener(), new VoiceRoomListener(), new MessageListener(), new CrocodileGame(), new Tickets())
                 .enableIntents(GatewayIntent.GUILD_MEMBERS)
                 .build().awaitReady();
 
@@ -77,13 +80,16 @@ public class BotApplication {
 
 
     @Bean
-    public CommandLineRunner update(UserRepository repository, SlashCommandRepository slashCommandRepository_, SlashCommandOptionRepository slashCommandOptionRepository_, CrocodileRepository crocodileRepository_, ResourceLoader resourceLoader_) {
+    public CommandLineRunner update(UserRepository repository, SlashCommandRepository slashCommandRepository_,
+                                    SlashCommandOptionRepository slashCommandOptionRepository_, CrocodileRepository crocodileRepository_,
+                                    ResourceLoader resourceLoader_, TicketRepository ticketRepository_) {
         return (args) -> {
             userRepository = repository;
             slashCommandRepository = slashCommandRepository_;
             slashCommandOptionRepository = slashCommandOptionRepository_;
             crocodileRepository = crocodileRepository_;
             resourceLoader = resourceLoader_;
+            ticketRepository = ticketRepository_;
         };
     }
 }

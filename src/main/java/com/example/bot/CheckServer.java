@@ -13,7 +13,11 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.example.bot.BotApplication.*;
 import static com.example.bot.BotApplication.guild;
@@ -78,17 +82,16 @@ public class CheckServer {
             }
         }
         if (!slCmd.getPermissions().equals("ADMINISTRATOR")) {
-            guild.upsertCommand(slCmd.getName(), slCmd.getDescription()).addOptions(optionsList).queue();
-        }
-        else{
-            guild.upsertCommand(slCmd.getName(), slCmd.getDescription()).addOptions(optionsList).setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.MANAGE_CHANNEL, Permission.ADMINISTRATOR)).queue();
+            Command command = guild.upsertCommand(slCmd.getName(), slCmd.getDescription()).addOptions(optionsList).complete();
+        } else {
+            Command command = guild.upsertCommand(slCmd.getName(), slCmd.getDescription()).addOptions(optionsList).setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.MANAGE_CHANNEL, Permission.ADMINISTRATOR)).complete();
         }
         //.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.MANAGE_CHANNEL, Permission.ADMINISTRATOR))
         result = "";
     }
 
     //проверяет, есть ли команда на сервере по её названию
-    public Boolean checkCommandOnServer(String commandName) {
+    public static Boolean checkCommandOnServer(String commandName) {
         RestAction<List<Command>> commands = guild.retrieveCommands();
         AtomicBoolean foundMatch = new AtomicBoolean(false);
         commands.queue(
@@ -103,6 +106,34 @@ public class CheckServer {
                 Throwable::printStackTrace
         );
         return foundMatch.get();
+    }
+
+    //возвращает id пользователя по его имени
+    public static String getIdUserOnServer(String nameUser) {
+        String result = "";
+        List<Member> members = guild.getMembers();
+        for (Member member : members) {
+            if (member.getUser().getName().equals(nameUser)) {
+                result = member.getId();
+                break;
+            }
+        }
+        return result;
+    }
+
+    //возвращает id команды по её названию
+    public static String getIdCommandOnServer(String commandName) throws ExecutionException, InterruptedException {
+        CompletableFuture<String> result1 = new CompletableFuture<>();
+
+        guild.retrieveCommands().queue(commands -> {
+            for (Command command : commands) {
+                if (command.getName().equals(commandName)) {
+                    result1.complete(command.getId());
+                    break;
+                }
+            }
+        });
+        return result1.get();
     }
 
     //синхронизация голосовых каналов с БД для исключения ошибок и проверки правильности работы бота

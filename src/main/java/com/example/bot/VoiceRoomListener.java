@@ -151,125 +151,129 @@ public class VoiceRoomListener extends ListenerAdapter {
 
     @Override
     public void onModalInteraction(ModalInteractionEvent event) {
-        switch (event.getModalId()) {
-            //форма изменение название комнаты
-            case ("name-voice-channel-modal1"): {
-                ModalMapping nameRoomValue = event.getValue("new-name-voice-channel1");
-                assert nameRoomValue != null;
-                String nameRoom = nameRoomValue.getAsString();
+        if(event.getModalId().contains("1")){
+            switch (event.getModalId()) {
+                //форма изменение название комнаты
+                case ("name-voice-channel-modal1"): {
+                    ModalMapping nameRoomValue = event.getValue("new-name-voice-channel1");
+                    assert nameRoomValue != null;
+                    String nameRoom = nameRoomValue.getAsString();
 
-                User host = userRepository.getUserById(Objects.requireNonNull(event.getMember()).getIdLong());
-                Long idChannel = getIdChannelByHost(host);
-                AudioChannel audioChannel = guild.getVoiceChannelById(idChannel);
-                audioChannel.getManager().setName(nameRoom).queue();
-                event.deferReply(true).setContent("Название комнатки успешно изменено!!").queue();
-                break;
-            }
-            //форма изменения количесвта пользователей
-            case ("limit-user-channel-modal1"): {
-                ModalMapping limitUserValue = event.getValue("limit-user-voice-channel1");
-                assert limitUserValue != null;
-                try {
-                    int limit = Integer.parseInt(limitUserValue.getAsString());
                     User host = userRepository.getUserById(Objects.requireNonNull(event.getMember()).getIdLong());
                     Long idChannel = getIdChannelByHost(host);
-                    net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel voiceChannel = guild.getVoiceChannelById(idChannel);
-                    //AudioChannel audioChannel = guild.getVoiceChannelById(idChannel);
-                    if (limit >= 0) {
-                        System.out.println(voiceChannel.getUserLimit());
-                        voiceChannel.getManager().setUserLimit(limit).queue();
-                        if (limit == 0)
-                            event.deferReply(true).setContent("Нолик снимает все ограничения. Встречай гостей!").queue();
-                        else
-                            event.deferReply(true).setContent("Лимит пользователей твоей комнаты ограничен до " + limit).queue();
-                    } else event.deferReply(true).setContent("Могу и клюнуть. Какое ещё отрицательное число?").queue();
-                } catch (NumberFormatException e) {
-                    event.deferReply(true).setContent("Кому-то пора выучить, что такое цифры...").queue();
+                    AudioChannel audioChannel = guild.getVoiceChannelById(idChannel);
+                    audioChannel.getManager().setName(nameRoom).queue();
+                    event.deferReply(true).setContent("Название комнатки успешно изменено!!").queue();
+                    break;
                 }
-                break;
+                //форма изменения количесвта пользователей
+                case ("limit-user-channel-modal1"): {
+                    ModalMapping limitUserValue = event.getValue("limit-user-voice-channel1");
+                    assert limitUserValue != null;
+                    try {
+                        int limit = Integer.parseInt(limitUserValue.getAsString());
+                        User host = userRepository.getUserById(Objects.requireNonNull(event.getMember()).getIdLong());
+                        Long idChannel = getIdChannelByHost(host);
+                        net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel voiceChannel = guild.getVoiceChannelById(idChannel);
+                        //AudioChannel audioChannel = guild.getVoiceChannelById(idChannel);
+                        if (limit >= 0) {
+                            System.out.println(voiceChannel.getUserLimit());
+                            voiceChannel.getManager().setUserLimit(limit).queue();
+                            if (limit == 0)
+                                event.deferReply(true).setContent("Нолик снимает все ограничения. Встречай гостей!").queue();
+                            else
+                                event.deferReply(true).setContent("Лимит пользователей твоей комнаты ограничен до " + limit).queue();
+                        } else event.deferReply(true).setContent("Могу и клюнуть. Какое ещё отрицательное число?").queue();
+                    } catch (NumberFormatException e) {
+                        event.deferReply(true).setContent("Кому-то пора выучить, что такое цифры...").queue();
+                    }
+                    break;
+                }
+                default:
+                    event.deferReply(true).setContent("Работаем над этим вопросом").queue();
             }
-            default:
-                event.deferReply(true).setContent("Работаем над этим вопросом").queue();
         }
     }
 
     @Override
     public void onGenericSelectMenuInteraction(GenericSelectMenuInteractionEvent event) {
-        switch (event.getComponent().getId()) {
-            case ("select-new-host-room1"): {
-                User oldHost = userRepository.getUserById(event.getMember().getIdLong());
-                List values = event.getValues();
-                Member newHost = (Member) values.get(0);
-                long IdChannel = getIdChannelByHost(oldHost);
-                User newUserHost = userRepository.getUserById(newHost.getIdLong());
-                if (newHost.getIdLong() != oldHost.getId()) {
-                    if (!newHost.getUser().isBot()) {
-                        if (checkVoiceMember(IdChannel, newHost.getIdLong())) {
-                            VoiceChannel voiceChannel = voiceChannelRepository.getByIdChannel(IdChannel);
-                            voiceChannel.setHost(newUserHost);
-                            voiceChannelRepository.save(voiceChannel);
-                            //уведомление пользователя, о том, что он стал хозяином
-                            net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel voiceChannel1 = guild.getVoiceChannelById(voiceChannel.getIdChannel());
-                            SystemMessage systemMessage = new SystemMessage();
-                            systemMessage.sendMsgAboutNewHost(voiceChannel1, newUserHost);
-                            event.deferReply(true).setContent("Владелец комнатки успешно изменён!").queue();
+        if(event.getComponent().getId().contains("1")){
+            switch (event.getComponent().getId()) {
+                case ("select-new-host-room1"): {
+                    User oldHost = userRepository.getUserById(event.getMember().getIdLong());
+                    List values = event.getValues();
+                    Member newHost = (Member) values.get(0);
+                    long IdChannel = getIdChannelByHost(oldHost);
+                    User newUserHost = userRepository.getUserById(newHost.getIdLong());
+                    if (newHost.getIdLong() != oldHost.getId()) {
+                        if (!newHost.getUser().isBot()) {
+                            if (checkVoiceMember(IdChannel, newHost.getIdLong())) {
+                                VoiceChannel voiceChannel = voiceChannelRepository.getByIdChannel(IdChannel);
+                                voiceChannel.setHost(newUserHost);
+                                voiceChannelRepository.save(voiceChannel);
+                                //уведомление пользователя, о том, что он стал хозяином
+                                net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel voiceChannel1 = guild.getVoiceChannelById(voiceChannel.getIdChannel());
+                                SystemMessage systemMessage = new SystemMessage();
+                                systemMessage.sendMsgAboutNewHost(voiceChannel1, newUserHost);
+                                event.deferReply(true).setContent("Владелец комнатки успешно изменён!").queue();
+                            } else
+                                event.deferReply(true).setContent("Не нашёл такого среди гостей твоей комнатки!").queue();
                         } else
-                            event.deferReply(true).setContent("Не нашёл такого среди гостей твоей комнатки!").queue();
-                    } else
-                        event.deferReply(true).setContent("У-у-у, вот это ты загнул. Ботам не до владения комнатками.\nНайди кого-то более подходящего и свободного :')").queue();
-                } else event.deferReply(true).setContent("Себя переназначить хочешь?").queue();
-                break;
-            }
-            case ("select-kick-user-room1"): {
-                User host = userRepository.getUserById(event.getMember().getIdLong());
-                List values = event.getValues();
-                Member userForKick = (Member) values.get(0);
-                long idChannel = getIdChannelByHost(host);
-                AudioChannel audioChannel = guild.getVoiceChannelById(idChannel);
-                List<Member> membersInVC = audioChannel.getMembers();
-                if (membersInVC.contains(userForKick)) {
-                    audioChannel.getGuild().kickVoiceMember(userForKick).queue();
-                    event.deferReply(true).setContent("Утёнок исключил " + userForKick.getAsMention() + " из твоей комнатки").queue();
-                } else event.deferReply(true).setContent("Не нашёл такого среди гостей твоей комнатки!").queue();
-                break;
-            }
-            case ("select-add-user-room1"): {
-                User host = userRepository.getUserById(event.getMember().getIdLong());
-                List values = event.getValues();
-                Member userForAdd = (Member) values.get(0);
-                long idChannel = getIdChannelByHost(host);
-                AudioChannel audioChannel = guild.getVoiceChannelById(idChannel);
-                List<Member> membersInVC = audioChannel.getMembers();
-                if (!membersInVC.contains(userForAdd)) {
-                    long allow = Permission.VOICE_CONNECT.getRawValue(); // разрешить подключаться к войс-каналу
-                    long deny = 0; // нет запрещений
-                    audioChannel.getManager().putPermissionOverride(userForAdd, allow, deny).queue();
-                    event.deferReply(true).setContent("Утёнок пригласил " + userForAdd.getAsMention() + " в твою комнатку").queue();
-                } else event.deferReply(true).setContent("Гость уже приглашён!").queue();
-                break;
-            }
-            case ("select-ban-user-room1"): {
-                User host = userRepository.getUserById(event.getMember().getIdLong());
-                List values = event.getValues();
-                Member userForBan = (Member) values.get(0);
-                long idChannel = getIdChannelByHost(host);
-                net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel voiceChannel = guild.getVoiceChannelById(idChannel);
-                // Проверяем, находится ли пользователь в голосовом канале
-                if (voiceChannel != null) {
-                    long allow = 0; // нет разрешения
-                    long deny = Permission.VOICE_CONNECT.getRawValue(); // запретить подключаться к войс-каналу
-                    voiceChannel.getManager().putPermissionOverride(userForBan, allow, deny).queue();
-                    List<Member> membersInVC = voiceChannel.getMembers();
-                    if(membersInVC.contains(userForBan))
-                    {
-                        voiceChannel.getGuild().kickVoiceMember(userForBan).queue();
-                    }
-                    event.deferReply(true).setContent("Утёнок забрал доступ к комнатке у  " + userForBan.getAsMention()).queue();
+                            event.deferReply(true).setContent("У-у-у, вот это ты загнул. Ботам не до владения комнатками.\nНайди кого-то более подходящего и свободного :')").queue();
+                    } else event.deferReply(true).setContent("Себя переназначить хочешь?").queue();
+                    break;
                 }
-                break;
+                case ("select-kick-user-room1"): {
+                    User host = userRepository.getUserById(event.getMember().getIdLong());
+                    List values = event.getValues();
+                    Member userForKick = (Member) values.get(0);
+                    long idChannel = getIdChannelByHost(host);
+                    AudioChannel audioChannel = guild.getVoiceChannelById(idChannel);
+                    List<Member> membersInVC = audioChannel.getMembers();
+                    if (membersInVC.contains(userForKick)) {
+                        audioChannel.getGuild().kickVoiceMember(userForKick).queue();
+                        event.deferReply(true).setContent("Утёнок исключил " + userForKick.getAsMention() + " из твоей комнатки").queue();
+                    } else event.deferReply(true).setContent("Не нашёл такого среди гостей твоей комнатки!").queue();
+                    break;
+                }
+                case ("select-add-user-room1"): {
+                    User host = userRepository.getUserById(event.getMember().getIdLong());
+                    List values = event.getValues();
+                    Member userForAdd = (Member) values.get(0);
+                    long idChannel = getIdChannelByHost(host);
+                    AudioChannel audioChannel = guild.getVoiceChannelById(idChannel);
+                    List<Member> membersInVC = audioChannel.getMembers();
+                    if (!membersInVC.contains(userForAdd)) {
+                        long allow = Permission.VOICE_CONNECT.getRawValue(); // разрешить подключаться к войс-каналу
+                        long deny = 0; // нет запрещений
+                        audioChannel.getManager().putPermissionOverride(userForAdd, allow, deny).queue();
+                        event.deferReply(true).setContent("Утёнок пригласил " + userForAdd.getAsMention() + " в твою комнатку").queue();
+                    } else event.deferReply(true).setContent("Гость уже приглашён!").queue();
+                    break;
+                }
+                case ("select-ban-user-room1"): {
+                    User host = userRepository.getUserById(event.getMember().getIdLong());
+                    List values = event.getValues();
+                    Member userForBan = (Member) values.get(0);
+                    long idChannel = getIdChannelByHost(host);
+                    net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel voiceChannel = guild.getVoiceChannelById(idChannel);
+                    // Проверяем, находится ли пользователь в голосовом канале
+                    if (voiceChannel != null) {
+                        long allow = 0; // нет разрешения
+                        long deny = Permission.VOICE_CONNECT.getRawValue(); // запретить подключаться к войс-каналу
+                        voiceChannel.getManager().putPermissionOverride(userForBan, allow, deny).queue();
+                        List<Member> membersInVC = voiceChannel.getMembers();
+                        if(membersInVC.contains(userForBan))
+                        {
+                            voiceChannel.getGuild().kickVoiceMember(userForBan).queue();
+                        }
+                        event.deferReply(true).setContent("Утёнок забрал доступ к комнатке у  " + userForBan.getAsMention()).queue();
+                    }
+                    break;
+                }
+                default:
+                    event.deferReply(true).setContent("Работаем над этим вопросом").queue();
             }
-            default:
-                event.deferReply(true).setContent("Работаем над этим вопросом").queue();
         }
     }
 
