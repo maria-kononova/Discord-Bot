@@ -96,13 +96,15 @@ public class BotCommands extends ListenerAdapter {
                         }
                         TextChannel channel = (TextChannel) event.getChannel();
                         try {
-                            BufferedImage image = new BufferedImage(600, 300, BufferedImage.TYPE_INT_ARGB);
+                            /*BufferedImage image = new BufferedImage(600, 300, BufferedImage.TYPE_INT_ARGB);
                             Graphics2D graphics = image.createGraphics();
                             graphics.setColor(Color.BLACK);
                             graphics.fillRect(0, 0, 600, 300);
                             graphics.setColor(Color.WHITE);
                             graphics.drawString(user.getId().toString(), 150, 100);
-                            graphics.dispose();
+                            graphics.dispose();*/
+                            ImageGeneric imageGeneric = new ImageGeneric();
+                            BufferedImage image = imageGeneric.genericImage(user.getId());
                             //изменить название файла для одного пользователя
                             File outputfile = new File("image.png");
                             ImageIO.write(image, "png", outputfile);

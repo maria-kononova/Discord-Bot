@@ -43,14 +43,12 @@ public class UpdateServer extends ListenerAdapter {
                 for(Member member : members){
                     User user = userRepository.getUserById(member.getIdLong());
                     if (member.isBoosting()) {
-                        user.updateCoins(3);
-                        user.updateExp(3);
+                        user.update(3);
                     } else if(Objects.requireNonNull(member.getVoiceState()).isDeafened()){
 
                     }
                     else {
-                        user.updateExp(1);
-                        user.updateCoins(1);
+                        user.update(1);
                     }
                     userRepository.save(user);
                 }

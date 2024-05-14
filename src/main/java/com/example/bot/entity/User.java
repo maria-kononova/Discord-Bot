@@ -21,6 +21,8 @@ public class User {
     private int exp; //опыт пользователя, заработанный на сервере
     private Date dateEntry; //дата первого присоединения к серверу
     private boolean active; //показывает активен ли пользователь (присутствует на сервере)
+    private int message;
+    private int minute;
 
     //конструктор для создания нового пользователя, назначающий начальные данные (валюту, опыт, дату, актив)
     public User(Long id) {
@@ -29,6 +31,8 @@ public class User {
         this.exp = 10;
         this.active = true;
         this.dateEntry = new Date();
+        this.message = 0;
+        this.minute = 0;
     }
     //метод получения уровня пользователя
     public int getLvl() {
@@ -58,6 +62,18 @@ public class User {
             expOnLvl += expToNextLvl(i);
         }
         return this.exp - expOnLvl;
+    }
+
+    public void sendMsg(){
+        updateCoins(1);
+        updateExp(5);
+        message++;
+    }
+
+    public void update(int count){
+        updateCoins(count);
+        updateExp(count);
+        minute++;
     }
     //метод обновления валюты у пользователя
     public void updateCoins(int coins) {

@@ -14,8 +14,7 @@ public class MessageListener extends ListenerAdapter {
         if (!event.getAuthor().isBot()) {
             //System.out.println(event.getMessage());
             User user = userRepository.getUserById(event.getAuthor().getIdLong());
-            user.updateCoins(1);
-            user.updateExp(5);
+            user.sendMsg();
             userRepository.save(user);
         }
     }
