@@ -63,6 +63,13 @@ public class User {
         }
         return this.exp - expOnLvl;
     }
+    //формат 3ч. 4м.
+    public String getMinuteToString(){
+        if(minute < 60 ) return minute + "m.";
+        int hour = minute/60;
+        int min = minute - hour*60;
+        return hour + "h." + min + "m.";
+    }
 
     public void sendMsg(){
         updateCoins(1);

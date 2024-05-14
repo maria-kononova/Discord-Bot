@@ -113,6 +113,8 @@ public class BotCommands extends ListenerAdapter {
                             //event.getHook().sendMessage("").addFiles().setEphemeral(true).queue();
                         } catch (IOException e) {
                             e.printStackTrace();
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
                         }
                         break;
                     }
