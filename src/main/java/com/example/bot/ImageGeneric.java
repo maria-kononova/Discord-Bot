@@ -69,7 +69,7 @@ public class ImageGeneric {
         graphics.fillRect(40, 40, width - 50, height - 60);
 
         // Создаем градиентную кисть
-        GradientPaint gp = new GradientPaint(0, 0, colorSecondary, 0, 500, new Color(0, 0, 0, 0), true);
+        GradientPaint gp = new GradientPaint(0, 0, new Color(colorSecondary.getRed(), colorSecondary.getGreen(), colorSecondary.getBlue(), 80), 0, 500, new Color(0, 0, 0, 0), true);
         // Устанавливаем эту кисть в Graphics2D
         graphics.setPaint(gp);
         // Рисуем прямоугольник
@@ -87,16 +87,36 @@ public class ImageGeneric {
         //урвоень цифра тень
         graphics.setColor(colorSecondary);
         graphics.setFont(new Font("Beef'd", Font.BOLD, maxFontSize - 20));
-        graphics.drawString(String.valueOf(user.getLvl()), xForLvl(150, String.valueOf(user.getLvl())), 415);
+        graphics.drawString(String.valueOf(user.getLvl()), xForLvl(160, String.valueOf(user.getLvl())), 415);
         //уровень цифра
         graphics.setColor(colorPrimary);
-        graphics.drawString(String.valueOf(user.getLvl()), xForLvl(140, String.valueOf(user.getLvl())), 410);
-        //уровень обводка
-        /*graphics.setColor(colorSecondary);
-        graphics.fillRect(90, 420, 240, 520);*/
+        graphics.drawString(String.valueOf(user.getLvl()), xForLvl(150, String.valueOf(user.getLvl())), 410);
+
+        //подложка под статистику
+        graphics.setColor(new Color(0, 0, 0, 80));
+        graphics.fillRect(400, 430, 850, 500);
+
+        //подложка под рейтинг
+        graphics.fillRect(width - 650, height - 250, 530, 180);
+
+        //топ надпись
+        String rating = String.valueOf(user.ratingUser(userRepository.findAll(), user));
+        graphics.setColor(colorSecondary);
+        graphics.drawString(rating,width - 360, height  - 95);
+        graphics.setColor(colorPrimary);
+        graphics.drawString(rating,width - 370, height  - 100);
+        //топ иконка
+        graphics.drawImage(resizeImage(recolorIcon("src/main/resources/static/top.png", colorSecondary), 250, 250), width - 640, height  - 280, null);
+
         //уровень фон
         graphics.setColor(colorPrimary);
         graphics.fillRect(100, 430, 220, 500);
+        //уровень градиент внутри
+        //graphics.setColor(colorSecondary.darker());
+        GradientPaint gp2 = new GradientPaint(0, 0, new Color(colorSecondary.getRed(), colorSecondary.getGreen(), colorSecondary.getBlue(), 100), 0, 500, colorPrimary, true);
+        graphics.setPaint(gp2);
+        graphics.fillRect(120, 450 , 180, 460);
+        graphics.setPaint(null);
         //уровень шкала
         graphics.setColor(colorSecondary);
         int h = hForLvlShcal(user, 460);
@@ -112,10 +132,6 @@ public class ImageGeneric {
         graphics.setColor(colorSecondary);
         graphics.fillRect(350, 330, 20, 600);
 
-        //подложка под статистику
-
-        graphics.setColor(new Color(0, 0, 0, 80));
-        graphics.fillRect(400, 430, 850, 500);
 
         //иконки
         graphics.drawImage(resizeImage(recolorIcon("src/main/resources/static/microphone.png", colorSecondary), 150, 150), 430, 370, null);
@@ -124,6 +140,7 @@ public class ImageGeneric {
         graphics.setFont(new Font("Beef'd", Font.BOLD, maxFontSize - 40));
         /*graphics.setColor(colorSecondary);
         graphics.drawString(String.valueOf(user.getCoins()),610, 735);*/
+        //статистика
         graphics.setColor(colorPrimary);
         graphics.drawString(user.getMinuteToString(),600, 480);
         graphics.drawString(String.valueOf(user.getMessage()),600, 650);
@@ -140,7 +157,6 @@ public class ImageGeneric {
         //подложка под аватар
         graphics.setColor(colorPrimary);
         graphics.fillOval(width - avatar - 110, height - avatar - 305, avatar + 20, avatar + 20);
-
 
         //маска под изображение
         Ellipse2D.Double circle = new Ellipse2D.Double(width - avatar - 100, height - avatar - 295, avatar, avatar);

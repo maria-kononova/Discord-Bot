@@ -8,7 +8,14 @@ package com.example.bot.entity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import jakarta.persistence.*;
-import java.util.Date;
+import org.antlr.v4.runtime.misc.Interval;
+
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.Temporal;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Entity
 @NoArgsConstructor
@@ -34,6 +41,7 @@ public class User {
         this.message = 0;
         this.minute = 0;
     }
+
     //метод получения уровня пользователя
     public int getLvl() {
         int lvl = 0;
@@ -63,29 +71,61 @@ public class User {
         }
         return this.exp - expOnLvl;
     }
+
     //формат 3ч. 4м.
-    public String getMinuteToString(){
-        if(minute < 60 ) return minute + "m.";
-        int hour = minute/60;
-        int min = minute - hour*60;
+    public String getMinuteToString() {
+        if (minute < 60) return minute + "m.";
+        int hour = minute / 60;
+        int min = minute - hour * 60;
         return hour + "h." + min + "m.";
     }
 
-    public void sendMsg(){
+    public void sendMsg() {
         updateCoins(1);
         updateExp(5);
         message++;
     }
 
-    public void update(int count){
+    public void update(int count) {
         updateCoins(count);
         updateExp(count);
         minute++;
     }
+
+    //метод определения рейтинга пользователя
+    public int ratingUser(List<User> users, User user) {
+        int min = users.size();
+        long ratingVal = getRatingOfUser(user);
+        List<Long> ratings = new ArrayList<>();
+        for(User user_ : users){
+            ratings.add(getRatingOfUser(user_));
+        }
+        Collections.sort(ratings);
+        Collections.reverse(ratings);
+        for(int i = 0; i < ratings.size(); i++ ){
+            if(Objects.equals(getRatingOfUser(user), ratings.get(i))) {
+                System.out.println(user.id + " "  + ratings.get(i));
+                return i+1;
+            }
+        }
+        return -1;
+    }
+
+    public Long getRatingOfUser(User user) {
+
+        long diff = new Date().getTime() - user.getDateEntry().getTime();//as given
+
+        long seconds = TimeUnit.MILLISECONDS.toSeconds(diff);
+        long minutes = (int) TimeUnit.MILLISECONDS.toMinutes(diff);
+
+        return  user.exp + minutes;
+    }
+
     //метод обновления валюты у пользователя
     public void updateCoins(int coins) {
         this.coins += coins;
     }
+
     //метод обновления опыта у пользователя
     public void updateExp(int exp) {
         this.exp += exp;
