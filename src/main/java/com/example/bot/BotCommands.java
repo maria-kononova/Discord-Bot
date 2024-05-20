@@ -1,6 +1,7 @@
 package com.example.bot;
 
 import com.example.bot.entity.*;
+import com.example.bot.entity.Event;
 import com.example.bot.repository.GifRepository;
 import com.example.bot.repository.UserRepository;
 import net.dv8tion.jda.api.entities.Message;
@@ -81,7 +82,7 @@ public class BotCommands extends ListenerAdapter {
                     case ("прогресс"): {
                         event.deferReply().queue();
                         User user = userRepository.getUserById(Objects.requireNonNull(event.getMember()).getIdLong());
-                        event.getHook().sendMessage("У тебя " + user.getLvl() + " лвл " + user.expOnLvl() + " / " + user.expToNextLvl(user.getLvl())).setEphemeral(true).queue();
+                        event.getHook().sendMessage("У тебя " + user.getLvl() + " уровень " + user.expOnLvl() + " / " + user.expToNextLvl(user.getLvl())).setEphemeral(true).queue();
                         break;
                     }
                     case ("профиль"): {
@@ -97,13 +98,6 @@ public class BotCommands extends ListenerAdapter {
                         }
                         TextChannel channel = (TextChannel) event.getChannel();
                         try {
-                            /*BufferedImage image = new BufferedImage(600, 300, BufferedImage.TYPE_INT_ARGB);
-                            Graphics2D graphics = image.createGraphics();
-                            graphics.setColor(Color.BLACK);
-                            graphics.fillRect(0, 0, 600, 300);
-                            graphics.setColor(Color.WHITE);
-                            graphics.drawString(user.getId().toString(), 150, 100);
-                            graphics.dispose();*/
                             ImageGeneric imageGeneric = new ImageGeneric();
                             BufferedImage image = imageGeneric.genericImage(user.getId());
                             //изменить название файла для одного пользователя
@@ -165,6 +159,29 @@ public class BotCommands extends ListenerAdapter {
                             event.deferReply(true).setContent(slashCommand.getReply() + "\nБыло удалено сообщений: " + countMessage).queue();
                         } else {
                             event.deferReply(true).setContent("Код неверный").queue();
+                        }
+                        break;
+                    }
+                    case("баннер_ивента"):{
+                        event.deferReply().queue();
+                        if (event.getOption("ивент", OptionMapping::getAsString) != null) {
+                            EventType ev = eventTypeRepository.getEventTypeByName(event.getOption("ивент", OptionMapping::getAsString));
+                            if(ev!=null){
+                                try {
+                                    ImageGeneric imageGeneric = new ImageGeneric();
+                                    BufferedImage image = imageGeneric.genericImageEvent(ev);
+                                    File outputfile = new File("image.png");
+                                    ImageIO.write(image, "png", outputfile);
+                                    FileUpload fileUpload = FileUpload.fromData(outputfile);
+                                    event.getHook().sendMessage("").addFiles(fileUpload).queue();
+                                    //event.getHook().sendMessage("").addFiles().setEphemeral(true).queue();
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                } catch (Exception e) {
+                                    throw new RuntimeException(e);
+                                }
+                            }
+                            else event.deferReply(true).setContent("Ивент не найден.").queue();
                         }
                         break;
                     }

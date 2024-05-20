@@ -3,6 +3,7 @@ package com.example.bot;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
@@ -10,7 +11,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.Random;
 
+import com.example.bot.entity.Event;
+import com.example.bot.entity.EventType;
 import com.example.bot.entity.User;
 import net.dv8tion.jda.api.entities.Member;
 import org.imgscalr.Scalr;
@@ -25,10 +29,12 @@ public class ImageGeneric {
     private int avatar = 600;
     private int nameW = 1960;
     private int nameH = 200;
-    private int maxFontSize = 100;
 
     private Color colorPrimary;
     private Color colorSecondary;
+
+    private String font1 = "Beef'd";
+    private String font2 = "Minecraftia";
 
     public ImageGeneric() {
     }
@@ -78,15 +84,15 @@ public class ImageGeneric {
 
         //тень имени
         graphics.setColor(colorSecondary);
-        graphics.setFont(new Font("Beef'd", Font.TYPE1_FONT, getFontSizeForName(member.getUser().getName())));
-        graphics.drawString(member.getUser().getName(), 110, 225);
+        graphics.setFont(new Font(font1, Font.TYPE1_FONT, getFontSizeForName(100, member.getEffectiveName())));
+        graphics.drawString(member.getEffectiveName(), 110, 225);
         //имя
         graphics.setColor(colorPrimary);
-        graphics.drawString(member.getUser().getName(), 100, 220);
+        graphics.drawString(member.getEffectiveName(), 100, 220);
 
         //урвоень цифра тень
         graphics.setColor(colorSecondary);
-        graphics.setFont(new Font("Beef'd", Font.BOLD, maxFontSize - 20));
+        graphics.setFont(new Font(font1, Font.BOLD, 100 - 20));
         graphics.drawString(String.valueOf(user.getLvl()), xForLvl(160, String.valueOf(user.getLvl())), 415);
         //уровень цифра
         graphics.setColor(colorPrimary);
@@ -102,11 +108,11 @@ public class ImageGeneric {
         //топ надпись
         String rating = String.valueOf(user.ratingUser(userRepository.findAll(), user));
         graphics.setColor(colorSecondary);
-        graphics.drawString(rating,width - 360, height  - 95);
+        graphics.drawString(rating, width - 360, height - 95);
         graphics.setColor(colorPrimary);
-        graphics.drawString(rating,width - 370, height  - 100);
+        graphics.drawString(rating, width - 370, height - 100);
         //топ иконка
-        graphics.drawImage(resizeImage(recolorIcon("src/main/resources/static/top.png", colorSecondary), 250, 250), width - 640, height  - 280, null);
+        graphics.drawImage(resizeImage(recolorIcon("src/main/resources/static/top.png", colorSecondary), 250, 250), width - 640, height - 280, null);
 
         //уровень фон
         graphics.setColor(colorPrimary);
@@ -115,7 +121,7 @@ public class ImageGeneric {
         //graphics.setColor(colorSecondary.darker());
         GradientPaint gp2 = new GradientPaint(0, 0, new Color(colorSecondary.getRed(), colorSecondary.getGreen(), colorSecondary.getBlue(), 100), 0, 500, colorPrimary, true);
         graphics.setPaint(gp2);
-        graphics.fillRect(120, 450 , 180, 460);
+        graphics.fillRect(120, 450, 180, 460);
         graphics.setPaint(null);
         //уровень шкала
         graphics.setColor(colorSecondary);
@@ -137,14 +143,14 @@ public class ImageGeneric {
         graphics.drawImage(resizeImage(recolorIcon("src/main/resources/static/microphone.png", colorSecondary), 150, 150), 430, 370, null);
         graphics.drawImage(resizeImage(recolorIcon("src/main/resources/static/message.png", colorSecondary), 130, 130), 440, 550, null);
         graphics.drawImage(resizeImage(recolorIcon("src/main/resources/static/coins.png", colorSecondary), 130, 130), 440, 730, null);
-        graphics.setFont(new Font("Beef'd", Font.BOLD, maxFontSize - 40));
+        graphics.setFont(new Font(font1, Font.BOLD, 100 - 40));
         /*graphics.setColor(colorSecondary);
         graphics.drawString(String.valueOf(user.getCoins()),610, 735);*/
         //статистика
         graphics.setColor(colorPrimary);
-        graphics.drawString(user.getMinuteToString(),600, 480);
-        graphics.drawString(String.valueOf(user.getMessage()),600, 650);
-        graphics.drawString(String.valueOf(user.getCoins()),600, 835);
+        graphics.drawString(user.getMinuteToString(), 600, 480);
+        graphics.drawString(String.valueOf(user.getMessage()), 600, 650);
+        graphics.drawString(String.valueOf(user.getCoins()), 600, 835);
 
         //подложка под аватарка
         graphics.setColor(colorSecondary);
@@ -169,6 +175,109 @@ public class ImageGeneric {
         //graphics.drawString(user.getId().toString(), 150, 100);
         graphics.dispose();
         return image;
+    }
+
+
+    public BufferedImage genericImageEvent(EventType event) throws Exception {
+        colorSecondary = Color.decode(event.getColor());
+        colorPrimary = colorSecondary.brighter();
+
+        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D graphics = image.createGraphics();
+
+        // Устанавливаем параметры сглаживания масштабирования
+        graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        graphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        //фон
+        graphics.setColor(colorPrimary);
+        graphics.fillRect(0, 0, width, height);
+        graphics.setColor(colorSecondary);
+        graphics.fillRect(20, 20, width - 20, height);
+        graphics.setColor(Color.BLACK);
+        graphics.fillRect(40, 40, width - 50, height - 60);
+        /*int layer = 0;
+        for (int i = 0; i < 50; i++) {
+            Random random = new Random();
+            int a = random.nextInt(15, 50);
+            int r = random.nextInt(0, 10);
+            if (r > 5) graphics.setColor(colorPrimary);
+            else graphics.setColor(colorSecondary);
+            graphics.fillRect(random.nextInt(40, width - 80), random.nextInt(40, height - 80), a, a);
+            *//*if (layer == 50) {
+                graphics.setColor(new Color(0, 0, 0, 90));
+                graphics.fillRect(40, 40, width - 50, height - 60);
+            }
+            layer++;*//*
+        }*/
+
+        //фон изображения
+        graphics.drawImage(recolorImageForEvent("src/main/resources/static/eventfon.png", colorSecondary, colorPrimary), 10, 10, null);
+        graphics.setColor(new Color(0, 0, 0, 90));
+        graphics.fillRect(40, 40, width - 50, height - 60);
+        // Создаем градиентную кисть
+        GradientPaint gp = new GradientPaint(0, 0, new Color(colorSecondary.getRed(), colorSecondary.getGreen(), colorSecondary.getBlue(), 80), 0, 500, new Color(0, 0, 0, 0), true);
+        // Устанавливаем эту кисть в Graphics2D
+        graphics.setPaint(gp);
+        // Рисуем прямоугольник
+        graphics.fillRect(40, 500, width - 50, height - 520);
+        graphics.setPaint(null);
+
+        //тень имени
+        graphics.setColor(colorSecondary);
+        graphics.setFont(new Font(font2, Font.TYPE1_FONT, getFontSizeForNameEvent(250, event.getName())));
+        graphics.drawString(event.getName(), 580 - getXMinusForNameEvent(event.getName()), 710);
+        //имя
+        graphics.setColor(colorPrimary);
+        graphics.drawString(event.getName(), 570 - getXMinusForNameEvent(event.getName()), 700);
+
+        /*event.setName("Расписание");
+        //тень имени
+        graphics.setColor(colorSecondary);
+        graphics.setFont(new Font(font2, Font.TYPE1_FONT, getFontSizeForNameEvent(200, event.getName())));
+        graphics.drawString(event.getName(), 810 - getXMinusForNameEvent(event.getName()), 580);
+        //имя
+        graphics.setColor(colorPrimary);
+        graphics.drawString(event.getName(), 800 - getXMinusForNameEvent(event.getName()), 570);
+
+        event.setName("Мероприятий");
+        //тень имени
+        graphics.setColor(colorSecondary);
+        graphics.setFont(new Font(font2, Font.TYPE1_FONT, getFontSizeForNameEvent(230, event.getName())));
+        graphics.drawString(event.getName(), 580 - getXMinusForNameEvent(event.getName()), 790);
+        //имя
+        graphics.setColor(colorPrimary);
+        graphics.drawString(event.getName(), 570 - getXMinusForNameEvent(event.getName()), 780);*/
+
+        graphics.setColor(colorSecondary);
+        graphics.fillRect(580 - getXMinusForNameEvent(event.getName()), 620, 900 + getPlusWidthEventLine(event.getName()) , 20);
+        graphics.fillRect(540 - getXMinusForNameEvent(event.getName()), 660, 1000 + getPlusWidthEventLine(event.getName()), 25);
+        graphics.setColor(colorPrimary);
+        graphics.fillRect(570 - getXMinusForNameEvent(event.getName()), 610, 900 +  getPlusWidthEventLine(event.getName()), 20);
+        graphics.fillRect(530 - getXMinusForNameEvent(event.getName()), 650, 1000 + getPlusWidthEventLine(event.getName()), 25);
+
+        //graphics.drawString(user.getId().toString(), 150, 100);
+        graphics.dispose();
+        return image;
+    }
+
+    public int getPlusWidthEventLine(String name){
+        int size = getFontSizeForNameEvent(250, name);
+        if(name.length() <=5 ) return 0;
+        if(name.length() <=6 ) return (name.length() - 5) * 100;
+        if(name.length() <= 10) return (name.length() - 5) * 140;
+        if(name.length() <= 15) return (name.length() - 5) * 100;
+        if(name.length() <= 20) return (name.length() - 5) * 60;
+        return (name.length() - 5) * 90;
+    }
+
+    public int getXMinusForNameEvent(String name) {
+        if (name.length() <= 5) return 0;
+        if (name.length() <= 10) return (name.length() - 5) * 70;
+        if (name.length() <= 15) return (name.length() - 5) * 50;
+        return (name.length() - 5) * 30;
+
     }
 
     public int hForLvlShcal(User user, int heightR) {
@@ -205,6 +314,34 @@ public class ImageGeneric {
         return replacedImage;
     }
 
+    public BufferedImage recolorImageForEvent(String imagePath, Color color1, Color color2) throws IOException {
+        // Считываем PNG изображение из файла
+        File file = new File(imagePath);
+        BufferedImage image = ImageIO.read(file);
+
+        // Создаем копию изображения для изменения
+        BufferedImage replacedImage = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        // Проходим по каждому пикселю изображения и заменяем черный цвет на белый
+        for (int x = 0; x < image.getWidth(); x++) {
+            for (int y = 0; y < image.getHeight(); y++) {
+                int rgb = image.getRGB(x, y);
+                if (rgb == Color.BLACK.getRGB()) {
+                    replacedImage.setRGB(x, y, color1.getRGB());
+                }
+            }
+        }
+        for (int x = 0; x < image.getWidth(); x++) {
+            for (int y = 0; y < image.getHeight(); y++) {
+                int rgb = image.getRGB(x, y);
+                if (rgb == Color.decode("#fafafa").getRGB() || rgb == Color.decode("#ffffff").getRGB() ||
+                rgb == Color.decode("#9f9f9").getRGB()) {
+                    replacedImage.setRGB(x, y, color2.getRGB());
+                }
+            }
+        }
+        return replacedImage;
+    }
+
     public static BufferedImage colorImage(BufferedImage loadImg, Color color) {
         Graphics g = loadImg.getGraphics();
         g.setColor(color);
@@ -213,13 +350,20 @@ public class ImageGeneric {
         return loadImg;
     }
 
-    public int getFontSizeForName(String name) {
-        int fontSize = maxFontSize;
-        if (name.length() < 5) return fontSize;
-        if (name.length() < 10) return fontSize - 10;
-        if (name.length() < 15) return fontSize - 30;
-        if (name.length() < 20) return fontSize - 50;
+    public int getFontSizeForName(int size, String name) {
+        if (name.length() < 5) return size;
+        if (name.length() < 10) return size - 10;
+        if (name.length() < 15) return size - 30;
+        if (name.length() < 20) return size - 50;
         else return 50;
+    }
+
+    public int getFontSizeForNameEvent(int size, String name) {
+        if (name.length() < 5) return size;
+        if (name.length() < 10) return size - 30;
+        if (name.length() < 15) return size - 50;
+        if (name.length() < 20) return size - 70;
+        else return 100;
     }
 
 

@@ -52,11 +52,11 @@ public class VoiceRoomListener extends ListenerAdapter {
         }
 
         User user = userRepository.getUserById(event.getUser().getIdLong());
-        if (event.getButton().getId().contains("1")) {
+        if (event.getButton().getId().contains("voice1")) {
             if (checkUserForIntrButton(user)) {
                 switch (event.getButton().getId()) {
                     //изменение название команты
-                    case ("change-voice-name1"): {
+                    case ("change-name-voice1"): {
                         TextInput nameRoom = TextInput.create("new-name-voice-channel1", "Название", TextInputStyle.SHORT)
                                 .setMinLength(3)
                                 .setMaxLength(20)
@@ -151,7 +151,7 @@ public class VoiceRoomListener extends ListenerAdapter {
 
     @Override
     public void onModalInteraction(ModalInteractionEvent event) {
-        if(event.getModalId().contains("1")){
+        if(event.getModalId().contains("modal1")){
             switch (event.getModalId()) {
                 //форма изменение название комнаты
                 case ("name-voice-channel-modal1"): {
@@ -197,7 +197,7 @@ public class VoiceRoomListener extends ListenerAdapter {
 
     @Override
     public void onGenericSelectMenuInteraction(GenericSelectMenuInteractionEvent event) {
-        if(event.getComponent().getId().contains("1")){
+        if(event.getComponent().getId().contains("room1")){
             switch (event.getComponent().getId()) {
                 case ("select-new-host-room1"): {
                     User oldHost = userRepository.getUserById(event.getMember().getIdLong());

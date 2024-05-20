@@ -114,8 +114,6 @@ public class User {
     public Long getRatingOfUser(User user) {
 
         long diff = new Date().getTime() - user.getDateEntry().getTime();//as given
-
-        long seconds = TimeUnit.MILLISECONDS.toSeconds(diff);
         long minutes = (int) TimeUnit.MILLISECONDS.toMinutes(diff);
 
         return  user.exp + minutes;

@@ -7,6 +7,7 @@ import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
+import net.dv8tion.jda.api.interactions.components.ItemComponent;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,7 +70,7 @@ public class CrocodileGame extends ListenerAdapter {
     //идентификатор команд 2
     @Override
     public void onButtonInteraction(@NotNull ButtonInteractionEvent event) {
-        if (event.getButton().getId().contains("2")) {
+        if (event.getButton().getId().contains("crocodile-game2")) {
             switch (event.getButton().getId()) {
 //                //Начало игры
 //                case ("start-crocodile-game2"): {
@@ -97,8 +98,11 @@ public class CrocodileGame extends ListenerAdapter {
                     if (userPlay.getUser().getId() == Objects.requireNonNull(event.getMember()).getIdLong()) {
                         if (userPlay.getPenalty() == 0) {
                             Button updateWordButton = Button.of(ButtonStyle.PRIMARY, "update-word-crocodile-game2", "Обновить слово");
-                            Collection<ActionRow> actionRows = new ArrayList<>();
-                            actionRows.add(ActionRow.of(updateWordButton));
+                            Button endGameButton = Button.of(ButtonStyle.SECONDARY, "end-crocodile-game2", "Выйти из игры");
+                            List<ItemComponent> components = new ArrayList<>();
+                            components.add(updateWordButton);
+                            components.add(endGameButton);
+                            ActionRow actionRow = ActionRow.of(components);
                             getNewWord();
                             //отправка сообщения о том, кто же загадывает слово
                             TextChannel textChannel = guild.getTextChannelById(CROCODILE_GAME);
@@ -106,7 +110,7 @@ public class CrocodileGame extends ListenerAdapter {
                                 textChannel.sendMessage("<@" + event.getMember().getIdLong() + "> думает над словом по-жомски").queue();
                             }
                             textChannel.sendMessage("<@" + event.getMember().getIdLong() + "> " + getPhraseStartGame()).queue();
-                            event.deferReply(true).setContent("Твоё слово: " + word).addComponents(actionRows).queue();
+                            event.deferReply(true).setContent("Твоё слово: " + word).addComponents(actionRow).queue();
                             startTimer();
                         } else {
                             event.deferReply(true).setContent("Тебя наказали за косяки в игре :с\nТы не можешь загадывать слова, пока у тебя есть штрафы. Чтобы снять штраф необходимо отгадать слово.\nНеобходимое количество: " + userPlay.getPenalty()).queue();
@@ -120,12 +124,24 @@ public class CrocodileGame extends ListenerAdapter {
                     if (userPlay.getUser().getId() == event.getMember().getIdLong()) {
                         getNewWord();
                         Button updateWordButton = Button.of(ButtonStyle.PRIMARY, "update-word-crocodile-game2", "Обновить слово");
-                        Collection<ActionRow> actionRows = new ArrayList<>();
-                        actionRows.add(ActionRow.of(updateWordButton));
-                        event.deferReply(true).setContent("Твоё новое слово: " + word).addComponents(actionRows).queue();
+                        Button endGameButton = Button.of(ButtonStyle.SECONDARY, "end-crocodile-game2", "Выйти из игры");
+                        List<ItemComponent> components = new ArrayList<>();
+                        components.add(updateWordButton);
+                        components.add(endGameButton);
+                        ActionRow actionRow = ActionRow.of(components);
+                        event.deferReply(true).setContent("Твоё новое слово: " + word).addComponents(actionRow).queue();
                     } else {
                         event.deferReply(true).setContent("Жулик, не воруй! Не твоё слово, попробуй в следующий раз!!").queue();
                     }
+                    break;
+                }
+                case("end-crocodile-game2"):{
+                    stopTimer();
+                    Button takeWordButton = Button.of(ButtonStyle.PRIMARY, "take-word-crocodile-game2", "Взять новое слово");
+                    Collection<ActionRow> actionRows = new ArrayList<>();
+                    actionRows.add(ActionRow.of(takeWordButton));
+                    event.deferReply(false).setContent("<@" + userPlay.getUser().getId() + "> выходит из игры. Слово обновлено, можете брать кто хочет!").addComponents(actionRows).queue();
+                    userPlay = null;
                     break;
                 }
             }

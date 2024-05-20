@@ -48,7 +48,7 @@ public class Tickets extends ListenerAdapter {
 
     @Override
     public void onButtonInteraction(ButtonInteractionEvent event) {
-        if (event.getButton().getId().contains("3")) {
+        if (event.getButton().getId().contains("ticket3")) {
             switch (event.getButton().getId()) {
                 case ("close-ticket3"): {
                     TextChannel textChannel = event.getChannel().asTextChannel();
@@ -77,7 +77,7 @@ public class Tickets extends ListenerAdapter {
                         TextInput textInput = TextInput.create("solution-ticket3", "Описание решения", TextInputStyle.PARAGRAPH)
                                 .setMaxLength(500)
                                 .build();
-                        Modal modal = Modal.create("solution-modal-ticket3", "Расскажи Утёнку о принятом решении").addActionRow(textInput).build();
+                        Modal modal = Modal.create("solution-ticket-modal3", "Расскажи Утёнку о принятом решении").addActionRow(textInput).build();
                         event.replyModal(modal).queue();
                     } else event.deferReply(true).setContent("Ты не можеть закончить обсуждение тикета :с").queue();
                     break;
@@ -108,7 +108,7 @@ public class Tickets extends ListenerAdapter {
 
     @Override
     public void onModalInteraction(ModalInteractionEvent event) {
-        if (event.getModalId().contains("3")) {
+        if (event.getModalId().contains("modal3")) {
             switch (event.getModalId()) {
                 case ("create-ticket-question-modal3"): {
                     ModalMapping descriptionModal = event.getValue("description-problem3");
@@ -118,7 +118,7 @@ public class Tickets extends ListenerAdapter {
                     TextChannel newChannel = guild.createTextChannel("❔Вопрос-" + member.getUser().getName(), guild.getCategoryById(TICKET_CATEGORY)).complete();
                     viewTicketForUser(member, newChannel);
                     String message = "## <a:9082443297d2ff80151793324186bc42:1238970002472833026> Появился вопрос\n" +
-                            "**<@" + member.getIdLong() + "> хочет задать вопросик:**\n" +
+                            "### **<@" + member.getIdLong() + "> хочет задать вопросик:**\n" +
                             ">>> " + description + "\n " +
                             "\n";
                     SystemMessage.sendMessageInTicket(newChannel, message);
@@ -134,7 +134,7 @@ public class Tickets extends ListenerAdapter {
                     TextChannel newChannel = guild.createTextChannel("❗Нарушение-" + member.getUser().getName(), guild.getCategoryById(TICKET_CATEGORY)).complete();
                     viewTicketForUser(member, newChannel);
                     String message = "## <a:030e86761180bea617468b23054fb357:1238969991093682186>  Поймано нарушение\n" +
-                            "**<@" + member.getIdLong() + "> сообщает о проблеме с пользователем:**\n" +
+                            "### **<@" + member.getIdLong() + "> сообщает о проблеме с пользователем:**\n" +
                             ">>> " + description + "\n " +
                             "\n";
                     ModalMapping userProblemModal = event.getValue("user-problem3");
@@ -142,7 +142,7 @@ public class Tickets extends ListenerAdapter {
                     if (!userProblem.equals("")) {
                         String idUserProblem = CheckServer.getIdUserOnServer(userProblem);
                         if (!idUserProblem.equals("")) {
-                            message += "Указанный нарушитель:\n" +
+                            message += "### Указанный нарушитель:\n" +
                                     "<@" + idUserProblem + ">";
                         }
                     }
@@ -163,7 +163,7 @@ public class Tickets extends ListenerAdapter {
                     //newChannel.getManager().putRolePermissionOverride(1181347862781644821L, Permission.VIEW_CHANNEL.getRawValue(), 0).queue();
                     viewTicketForUser(member, newChannel);
                     String message = "## <a:ffd9b46366e14141790a80d4922485bf:1238968051190464605> Обнаружился баг\n" +
-                            "**<@" + member.getIdLong() + "> сообщает об ошибке в работе Утёнка или сервера:**\n" +
+                            "### **<@" + member.getIdLong() + "> сообщает об ошибке в работе Утёнка или сервера:**\n" +
                             ">>> " + description + "\n " +
                             "\n";
                     if (!commandModal.getAsString().isEmpty()) {
@@ -177,7 +177,7 @@ public class Tickets extends ListenerAdapter {
                                 throw new RuntimeException(e);
                             }
                             if (id != null)
-                                message += "Команда, с которой возникла проблема:\n" +
+                                message += "### Команда, с которой возникла проблема:\n" +
                                         "</" + command + ":" + id + ">";
                         }
                     }
@@ -186,7 +186,7 @@ public class Tickets extends ListenerAdapter {
                     event.deferReply(true).setContent("Перейди в -> <#" + newChannel.getId() + "> для обсуждения бага").queue();
                     break;
                 }
-                case ("solution-modal-ticket3"): {
+                case ("solution-ticket-modal3"): {
                     TextChannel textChannel = event.getChannel().asTextChannel();
                     Ticket ticket = ticketRepository.getTicketById(textChannel.getIdLong());
                     ModalMapping solutionModal = event.getValue("solution-ticket3");
@@ -213,10 +213,10 @@ public class Tickets extends ListenerAdapter {
 
     @Override
     public void onGenericSelectMenuInteraction(GenericSelectMenuInteractionEvent event) {
-        if (event.getComponent().getId().contains("3")) {
+        if (event.getComponent().getId().contains("ticket3")) {
             switch (event.getComponent().getId()) {
                 //выбор типа проблемы для тикета, в соответствии с ним создаётся форма для заполнения подробностей проблемы
-                case ("type-select-problem3"): {
+                case ("type-select-problem-ticket3"): {
                     String value = (String) event.getValues().get(0);
                     TextInput.Builder descriptionProblem = TextInput.create("description-problem3", "Описание проблемы", TextInputStyle.PARAGRAPH)
                             .setMinLength(5)

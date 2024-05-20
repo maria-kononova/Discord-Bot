@@ -41,10 +41,12 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
+        <!-- https://mavenlibs.com/maven/dependency/net.dv8tion/JDA -->
+        <!-- https://mavenlibs.com/maven/dependency/net.dv8tion/JDA -->
         <dependency>
             <groupId>net.dv8tion</groupId>
             <artifactId>JDA</artifactId>
-            <version>5.0.0-alpha.22</version>
+            <version>5.0.0-beta.13</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

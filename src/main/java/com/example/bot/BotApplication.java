@@ -2,13 +2,14 @@ package com.example.bot;
 
 import com.example.bot.events.*;
 import com.example.bot.repository.*;
+
+import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.ChunkingFilter;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
-import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.JDABuilder;
-import net.dv8tion.jda.api.entities.*;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -16,6 +17,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.core.io.ResourceLoader;
 
 import javax.security.auth.login.LoginException;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -29,15 +31,20 @@ public class BotApplication {
     public static SlashCommandOptionRepository slashCommandOptionRepository;
     public static CrocodileRepository crocodileRepository;
     public static TicketRepository ticketRepository;
-
     public static ResourceLoader resourceLoader;
+    public static EventRepository eventRepository;
+    public static EventTypeRepository eventTypeRepository;
 
-    public static void main(String[] args) throws LoginException, InterruptedException, ExecutionException {
+    public static EventUserRepository eventUserRepository;
+
+    public static void main(String[] args) throws Exception {
         SpringApplication.run(BotApplication.class, args);
         create();
+        //SystemMessage.sendMsgAboutEvent();
         //SystemMessage.sendVoiceControlMessage();
         //SystemMessage.sendCrocodileGameMessage();
         //SystemMessage.sendTicketMessage();
+        //SystemMessage.sendCreateEventMsg();
         CheckServer checkServer = new CheckServer();
         checkServer.checkVoiceChannel();
         System.out.println(checkServer.result);
@@ -70,7 +77,9 @@ public class BotApplication {
                 .setMemberCachePolicy(MemberCachePolicy.ALL)
                 .enableIntents(GatewayIntent.MESSAGE_CONTENT)
                 .setChunkingFilter(ChunkingFilter.ALL) // enable member chunking for all guilds
-                .addEventListeners(new BotCommands(), new ButtonListener(), new DeleteMessageListener(), new VoiceRoomListener(), new MessageListener(), new CrocodileGame(), new Tickets())
+                .addEventListeners(new BotCommands(), new ButtonListener(), new DeleteMessageListener(),
+                        new VoiceRoomListener(), new MessageListener(), new CrocodileGame(), new Tickets(),
+                        new EventListener())
                 .enableIntents(GatewayIntent.GUILD_MEMBERS)
                 .build().awaitReady();
 
@@ -82,7 +91,9 @@ public class BotApplication {
     @Bean
     public CommandLineRunner update(UserRepository repository, SlashCommandRepository slashCommandRepository_,
                                     SlashCommandOptionRepository slashCommandOptionRepository_, CrocodileRepository crocodileRepository_,
-                                    ResourceLoader resourceLoader_, TicketRepository ticketRepository_) {
+                                    ResourceLoader resourceLoader_, TicketRepository ticketRepository_,
+                                    EventRepository eventRepository_, EventTypeRepository eventTypeRepository_,
+                                    EventUserRepository eventUserRepository_) {
         return (args) -> {
             userRepository = repository;
             slashCommandRepository = slashCommandRepository_;
@@ -90,6 +101,9 @@ public class BotApplication {
             crocodileRepository = crocodileRepository_;
             resourceLoader = resourceLoader_;
             ticketRepository = ticketRepository_;
+            eventRepository = eventRepository_;
+            eventTypeRepository = eventTypeRepository_;
+            eventUserRepository = eventUserRepository_;
         };
     }
 }
