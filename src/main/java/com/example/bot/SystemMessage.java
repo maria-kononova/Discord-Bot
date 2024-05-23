@@ -2,45 +2,33 @@ package com.example.bot;
 
 import com.example.bot.entity.Event;
 import com.example.bot.entity.EventUser;
-import com.example.bot.entity.EventUserId;
+import com.example.bot.entity.MessageCommand;
 import com.example.bot.entity.User;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
-import net.dv8tion.jda.api.entities.emoji.CustomEmoji;
-import net.dv8tion.jda.api.entities.emoji.Emoji;
-import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
-import net.dv8tion.jda.api.interactions.Interaction;
 import net.dv8tion.jda.api.interactions.InteractionHook;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
-import net.dv8tion.jda.api.interactions.components.Component;
 import net.dv8tion.jda.api.interactions.components.ItemComponent;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
 import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
-import net.dv8tion.jda.api.utils.FileUpload;
-import net.dv8tion.jda.internal.entities.WebhookImpl;
-import net.dv8tion.jda.internal.entities.emoji.CustomEmojiImpl;
 import net.dv8tion.jda.internal.interactions.component.StringSelectMenuImpl;
 
-import javax.imageio.ImageIO;
 import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.TextStyle;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.List;
 
 import static com.example.bot.BotApplication.guild;
-import static com.example.bot.VoiceRoomListener.CREATE_PRIVATE_VOICE_ROOM_ID;
+import static com.example.bot.listeners.ControlListener.*;
+import static com.example.bot.listeners.VoiceRoomListener.CREATE_PRIVATE_VOICE_ROOM_ID;
 
 public class SystemMessage {
-    public static String WEBHOOK = "https://discord.com/api/webhooks/1240451733902069830/g39voSSBP0Os2XIMgcc95QwPiOTiwpFSZVsf81EF9XardRKgg3cg6jZ2YTPnhtcclZ_B";
+    //Каналы
     public static String INFO_CHANNEL = "1181342904279629864";
     public static String RULES_CHANNEL = "1181342967986921575";
     public static String YOUR_VOICE_ROOM_EDIT = "1181326695408619560";
@@ -49,6 +37,15 @@ public class SystemMessage {
     public static String CREATE_EVENTS_CHANNEL = "1240055022339752057";
     public static String EVENT_REPORT_CHANNEL = "1240991200597774356";
     public static String EVENT_RULE_CHANNEL = "1181343379104206958";
+    public static String CONTROL_CHANNEL = "1241959159910629398";
+    public static String CONTROL_MODERATION_CHANNEL = "1241959778545307648";
+    public static String MODERATION_REPORT_CHANNEL = "1242285810745872526";
+    public static String SUPPORT_REPORT_CHANNEL = "1242295251557683292";
+    public static String CREATE_FORM_POST_CHANNEL = "1181343061142405301";
+    public static String CONTROL_REPORT_CHANNEL = "1242497019042332682";
+    public static String SHOP_CHANNEL = "1181343036979023902";
+    public static String ROLE_CHANNEL = "1181342950224056350";
+    //Эмоджи
     public static String EMOJI_EDIT = "1238534141943873688";
     public static String EMOJI_CROWN = "1238535149218693200";
     public static String EMOJI_USERS = "1238534150483345449";
@@ -202,6 +199,7 @@ public class SystemMessage {
         }
     }
 
+
     //сообщение создания инвета идентификатор 4
     public static void sendCreateEventMsg() {
         TextChannel chatChannel = guild.getTextChannelById(CREATE_EVENTS_CHANNEL);
@@ -216,7 +214,7 @@ public class SystemMessage {
             componentsPrimary.add(graphicButton);
             componentsPrimary.add(showEventMsgButton);
             EmbedBuilder embedBuilder = new EmbedBuilder();
-            embedBuilder.setDescription("# <a:9881duckvibe:1238511208563216485>  Создание ивента <a:9881duckvibe:1238511208563216485>  \n" +
+            embedBuilder.setDescription("# <a:9881duckvibe:1238511208563216485>  Управление ивентами <a:9881duckvibe:1238511208563216485>  \n" +
                     "### **Ивент - игровое и развлекательное мероприяте (событие), которое проводится ивентёрами на сервере.**\n" +
                     "\n" +
                     "### **Необходимая информация для создания и проведения ивента:**\n" +
@@ -224,7 +222,7 @@ public class SystemMessage {
                     "> Перед созданием события следует убедиться, что желаемая дата проведения свободна в расписании ивентов.\n" +
                     "> \n" +
                     "> **2.** Создать ивент можно только по представленным играм. \n" +
-                    "> При желании провести особенный ивент можно оформить **тикет** в ->  <#"+CREATE_TICKET_CHANNEL+">\n" +
+                    "> При желании провести особенный ивент можно оформить **тикет** в ->  <#" + CREATE_TICKET_CHANNEL + ">\n" +
                     "> \n" +
                     "> **3.** После выбора типа ивента необходимо ввести запланированную **дату** и **время** события. \n" +
                     "> \n" +
@@ -237,19 +235,11 @@ public class SystemMessage {
                     "> Награда может быть выдана **автоматически**, а также **отредактирована** для конкретного участника в соответствии с его заслугами на ивенте.\n" +
                     "> **Данный отчёт о выдаче награды будет направлен куратору.** \n" +
                     "\n" +
-                    "*С подробным описанием конкретных ивентов и базовых правил можно ознакомиться в -> <#"+EVENT_RULE_CHANNEL+">*");
+                    "*С подробным описанием конкретных ивентов и базовых правил можно ознакомиться в -> <#" + EVENT_RULE_CHANNEL + ">*");
             embedBuilder.setColor(Color.orange);
 
             chatChannel.sendMessageEmbeds(embedBuilder.build()).addActionRow(componentsPrimary).queue();
         }
-    }
-
-    //сообщение ивента webhook
-    public static void sendWebhookAboutEvent() throws Exception {
-        DiscordWebhook webhook = new DiscordWebhook(WEBHOOK);
-        webhook.addEmbed(new DiscordWebhook.EmbedObject().setColor(Color.orange).setTitle("Ивент").setImage("https://i.pinimg.com/736x/fa/81/3b/fa813b98ec12fb30bb2ace9e754120fa.jpg")
-                .setDescription("## Забегайте на ивент"));
-        webhook.execute();
     }
 
     //сообщение ивента
@@ -279,10 +269,9 @@ public class SystemMessage {
         embedBuilder.setColor(Color.decode(event.getType().getColor()));
         ///!!!
         int index = 1;
-        if(eventUsers == null){
+        if (eventUsers == null) {
             embedBuilder.addField("Нет участников", "", false);
-        }
-        else{
+        } else {
             for (EventUser eventUser : eventUsers) {
                 User user = eventUser.getId().getUser();
                 embedBuilder.addField(index + ". Награда участника - " + eventUser.getPrize(),
@@ -299,7 +288,7 @@ public class SystemMessage {
     public static void sendReportAboutEvent(Event ev, List<EventUser> eventUsers, Member member) {
         TextChannel textChannel = guild.getTextChannelById(EVENT_REPORT_CHANNEL);
         assert textChannel != null;
-        textChannel.sendMessage("### Отчёт о проведённом ивенте").setEmbeds(sendMsgPrize(ev,eventUsers, member, true).build()).queue();
+        textChannel.sendMessage("### Отчёт о проведённом ивенте").setEmbeds(sendMsgPrize(ev, eventUsers, member, true).build()).queue();
     }
 
     //сообщение о расписании ивента на неделю
@@ -364,7 +353,7 @@ public class SystemMessage {
 
 
     //Сообщение при создании тикета
-    public static void sendMessageInTicket(TextChannel textChannel, String textMsg) {
+    public static void sendMessageInTicket(TextChannel textChannel, String textMsg, String roleTag) {
         Button addUserInTicketButton = Button.of(ButtonStyle.PRIMARY, "add-user-in-ticket3", "Добавить участника").withEmoji(guild.getEmojiById(EMOJI_ADD_USER));
         Button closeTicketButton = Button.of(ButtonStyle.SECONDARY, "close-ticket3", "Закрыть тикет").withEmoji(guild.getEmojiById(1238511202385002527L));
         Button acceptTicketButton = Button.of(ButtonStyle.PRIMARY, "accept-ticket3", "Принять тикет").withEmoji(guild.getEmojiById(1238969983338418197L));
@@ -376,17 +365,17 @@ public class SystemMessage {
         embedBuilder.setDescription(textMsg);
         embedBuilder.setColor(Color.decode("#5865f2"));
 
-        Message message = textChannel.sendMessageEmbeds(embedBuilder.build()).addActionRow(components).complete();
+        Message message = textChannel.sendMessage("||<@&" + roleTag + ">||").setEmbeds(embedBuilder.build()).addActionRow(components).complete();
         message.pin().queue();
     }
 
     //Сообщение при закрытии тикета
-    public static void sendMsgCloseTicket(TextChannel textChannel, Long moderator) {
+    public static void sendMsgCloseTicket(TextChannel textChannel, User moderator) {
         Button solutionButton = Button.of(ButtonStyle.PRIMARY, "solution-button-ticket3", "Закончить обсуждение");
         EmbedBuilder embedBuilder = new EmbedBuilder();
         embedBuilder.setDescription("## <a:05e469d61100da5174d7628e11e8a8c5:1238969981094334538>   Итоги обсуждения\n" +
                 "### Поступило сообщение, что беседа подошла к концу. \n" +
-                "### <@" + moderator + "> нажав на кнопку расскажи Утёнку о принятом решении. \n" +
+                "### <@" + moderator.getId() + "> нажав на кнопку расскажи Утёнку о принятом решении. \n" +
                 "**Внимание!!** *После того, как Утёнок успешно получит результат беседы, данный тикет будет удалён.*");
         embedBuilder.setColor(Color.decode("#5865f2"));
         textChannel.sendMessageEmbeds(embedBuilder.build()).addActionRow(solutionButton).queue();
@@ -404,4 +393,191 @@ public class SystemMessage {
         MessageHistory history = chatChannel.getHistory();
         chatChannel.deleteMessages(history.getRetrievedHistory());
     }
+
+    //Сообщенеи управления идентификатор 5
+    public static void sendMessageControl() {
+        TextChannel chatChannel = guild.getTextChannelById(CONTROL_CHANNEL);
+        if (chatChannel != null) {
+            Button addRoleButton = Button.of(ButtonStyle.PRIMARY, "add-role-control5", "Выдать роль").withEmoji(guild.getEmojiById(EMOJI_ADD_USER));
+            Button removeRoleButton = Button.of(ButtonStyle.PRIMARY, "remove-role-control5", "Снять с роли").withEmoji(guild.getEmojiById(EMOJI_KICK_USER));
+            Button warnButton = Button.of(ButtonStyle.SECONDARY, "user-control5", "Статистика");
+            Button payButton = Button.of(ButtonStyle.SECONDARY, "pay-control5", "Выдать монетки").withEmoji(guild.getEmojiById(EMOJI_PRIZE));
+
+            List<ItemComponent> componentsPrimary = new ArrayList<>();
+            componentsPrimary.add(addRoleButton);
+            componentsPrimary.add(removeRoleButton);
+            componentsPrimary.add(warnButton);
+            componentsPrimary.add(payButton);
+            EmbedBuilder embedBuilder = new EmbedBuilder();
+            embedBuilder.setDescription("# <a:016ad08357cc39ebe9a95559d3cac860:1238969989185405069>  Управление куратора\n" +
+                    "### Куратор - следит за работой персонала своей ветки, то есть за модераторами, ивентёрами или саппортами. \n" +
+                    "\n" +
+                    "###  Важная информация:\n" +
+                    "> **1.**  Кураторы веток разбирают **заявки на должность** в -> <#" + FORM_POST_CHANNEL + ">\n" +
+                    "> В заявке содержится необходимая информация об участнике, который хочет занять какую-то должность. Куратор в праве провести собеседование с участником  или оформить отказ на заявку, указав причину.\n" +
+                    "> \n" +
+                    "> **2.** Кураторы должны объяснять и обучать участников работе на своей ветке. А также контролировать корректность их работы и, в случае возникновения проблем, объяснять как правильно и нужно сделать. \n" +
+                    "> \n" +
+                    "> **3.** В случае необходимости куратор может **снять участника с роли**, обязательно озвучив ему **причину**.\n" +
+                    "> \n" +
+                    "> **4.** Куратор может выдать **предупреждение **подчинённому. \n" +
+                    "> Предупреждение может быть связано с некорректным поведением персонала, критической ошибкой в работе или отсутствием без должной причины. Получив **3 предупреждения** участник отстраняется от роли.\n" +
+                    "> \n" +
+                    "> **5.** Кураторы должны следить за **статистикой** своих подчинённых и вести отчётность.\n" +
+                    "> Статистику можно посмотреть по конкретному участнику за всё время его работы на сервере, однако, в приоритете следует учитывать данные за текущую неделю.\n" +
+                    "> \n" +
+                    "> **6.** Кураторы должны выдавать **награду** персоналу за проделанную работу **каждое воскресенье**.\n" +
+                    "> Утёнок самостоятельно соберёт заслуги подчинённых, нужно лишь **проконтролировать корректность данных** и изменить их в случае необходимости. Если Утёнок не получит ответа до понедельника, то выдаст ту награду, которую считает нужной. <a:angry:1193322614052093994> ");
+            embedBuilder.setColor(Color.orange);
+
+            chatChannel.sendMessageEmbeds(embedBuilder.build()).addActionRow(componentsPrimary).queue();
+        }
+    }
+
+    //Сообщение модерации идентификатор 6
+    public static void sendMsgModeration() {
+        TextChannel chatChannel = guild.getTextChannelById(CONTROL_MODERATION_CHANNEL);
+        if (chatChannel != null) {
+            Button warningButton = Button.of(ButtonStyle.PRIMARY, "warning-moderation6", "Выдать предупреждение");
+            Button infoButton = Button.of(ButtonStyle.SECONDARY, "info-moderation6", "Информация");
+
+            List<ItemComponent> componentsPrimary = new ArrayList<>();
+            componentsPrimary.add(warningButton);
+            componentsPrimary.add(infoButton);
+            EmbedBuilder embedBuilder = new EmbedBuilder();
+            embedBuilder.setDescription("# <a:moderation:1242444830198468640> Модерация\n" +
+                    "### Модератор -  тот, кто следит за порядком на сервере. Его главная задача это следить за текстовыми чатами и голосовыми каналами, фиксировать нарушения и избавляться от нарушителей.\n" +
+                    "### Важная информация:\n" +
+                    "> **1.** Зафиксировать нарушение можно двумя способами:\n" +
+                    ">  нажать на кнопку **«Выдать предупреждение»** в управлении или же использовать слэш-команду **/тайм-аут**.\n" +
+                    "> \n" +
+                    "> **2.** Далее модератору предстоит выбрать **нарушителя из списка**. К этому нужно подходить очень внимательно. Утёнок напоминает, что эти списки умные, а значит там можно выполнить **поиск** по пользователям на сервере. \n" +
+                    "> \n" +
+                    "> **3.** После успешно выбранного нарушителя модератору выводится форма, в которой ему необходимо указать **тип нарушения**. Всю информацию по типам нарушения можно получить, нажав на кнопку **«Информация»**. В случае неверно указанного типа Утёнок не сможет определить, что модератор имеет ввиду.\n" +
+                    "> \n" +
+                    "> **4.** После успешно зафиксированного нарушения **отчёт автоматически отправится** кураторам ветки, а Утёнок **накажет **нарушителя.");
+            embedBuilder.setColor(Color.orange);
+
+            chatChannel.sendMessageEmbeds(embedBuilder.build()).addActionRow(componentsPrimary).queue();
+        }
+    }
+
+    //сообщение отчёта о выдаче нарушения
+    public static void sendReportModeration(EmbedBuilder embedBuilder) {
+        TextChannel textChannel = guild.getTextChannelById(MODERATION_REPORT_CHANNEL);
+        assert textChannel != null;
+        textChannel.sendMessage("### Отчёт о выданном нарушении").setEmbeds(embedBuilder.build()).queue();
+    }
+
+    //сообщение отчёта о решённом тикете модератора
+    public static void sendReportModerationTicket(EmbedBuilder embedBuilder) {
+        TextChannel textChannel = guild.getTextChannelById(MODERATION_REPORT_CHANNEL);
+        assert textChannel != null;
+        textChannel.sendMessage("### Отчёт о закрытом тикете").setEmbeds(embedBuilder.build()).queue();
+    }
+
+    //сообщение отчёта о решённом тикете саппорта
+    public static void sendReportSupportTicket(EmbedBuilder embedBuilder) {
+        TextChannel textChannel = guild.getTextChannelById(SUPPORT_REPORT_CHANNEL);
+        assert textChannel != null;
+        textChannel.sendMessage("### Отчёт о закрытом тикете").setEmbeds(embedBuilder.build()).queue();
+    }
+
+    //заявки на должность
+    public static void sendMsgFormPost() {
+        TextChannel chatChannel = guild.getTextChannelById(CREATE_FORM_POST_CHANNEL);
+        if (chatChannel != null) {
+            List<SelectOption> selectOptions = new ArrayList<>();
+            selectOptions.add(SelectOption.of("Модератор", "moderator").withEmoji(guild.getEmojiById("1242444830198468640")));
+            selectOptions.add(SelectOption.of("Ивентёр", "eventer").withEmoji(guild.getEmojiById("1242444827572830318")));
+            selectOptions.add(SelectOption.of("Саппорт", "support").withEmoji(guild.getEmojiById("1238511205316820992")));
+
+            StringSelectMenuImpl selectMenu = new StringSelectMenuImpl("form-post-select-control5", "Для начала выбери желаемую должность", 1, 1, false, selectOptions);
+
+            EmbedBuilder embedBuilder = new EmbedBuilder();
+            embedBuilder.setColor(Color.orange);
+            embedBuilder.setDescription("## <a:clapclap:1193322433206308984> Заявки на должности <a:clapclap:1193322433206308984> \n" +
+                    "Любишь проявлять активность? Попробуй себя в качестве помощника Утёнка и Уточек, стань частью стаффа сервера!\n### Общие требования:\n" +
+                    "> **1.** Быть старше 16 лет (возможны исключения).\n" +
+                    "> **2.** Иметь свободное время. Всего пару часов в день.\n" +
+                    "> **3.** Разбираться в правилах Дискорда и сервера.");
+            EmbedBuilder embedModerator = new EmbedBuilder();
+            embedModerator.setColor(Color.orange);
+            embedModerator.setDescription("## Модератор\n> Следит за порядком на сервере в текстовых чатах и голосовых каналах. Выдаёт нарушителям предупреждения и разбирает вааажные тикеты!");
+            embedModerator.setThumbnail("https://psv4.userapi.com/c237131/u572432973/docs/d23/c7eb5d26a3cd/moderation.gif?extra=lFq6bLI8SNDETb9yjAK7rnVK6Ye8zZvULqYhdwgHRSEbHMjegPMwab7Qn3bVY4IBlX3CnRWApZh8fcY4asekrD0pVjip-4ZCz9Tv3t854FSQGW4CinpDxCDWAF_Y9nYd1vIDzIAw7uxcGaEfom_JP9Hp");
+            EmbedBuilder embedEventer = new EmbedBuilder();
+            embedEventer.setColor(Color.orange);
+            embedEventer.setDescription("## Ивентёр\n> Проводит игровые и развлекательные мероприяти на сервере для всех участников!");
+            embedEventer.setThumbnail("https://sun9-78.userapi.com/c909518/u572432973/docs/d12/b1222ab893b5/eventer.gif?extra=ZsLnLj_HOUpoWViZB2sTlL7gOJN_UfSU8GSO1XVRqzleaemyCuGrI6DXOLO6LP5_2RHftRxMiMjZmMCzdommCTUlZlXUGvjz7v3wPag38Q00WwKpEQZcPYllrSixgETkzKUnuuxxCq0dbLMLS8Hwn4BX");
+            EmbedBuilder embedSupport = new EmbedBuilder();
+            embedSupport.setColor(Color.orange);
+            embedSupport.setDescription("## Саппорт\n> Общается с людьми в чатах и голосовых каналах, помогает адаптироваться к серверу и разобраться во всех его вопросах!");
+            embedSupport.setThumbnail("https://psv4.userapi.com/c909328/u572432973/docs/d6/95501900b852/support.gif?extra=b8EFU4gC98EGPscaToeFGt1JH25vlLMdfQrs06vV_5mGTYkXeyGC0G0hahkeYEH-94vg8ktYppzdOaB2b0LEE3zKD5tKnqZk91XDINjGiIXdxCNlIctFlAlODmmTn3-0F9wq0dUIpYdAAYzYFaLKcr4A");
+            chatChannel.sendMessageEmbeds(embedBuilder.build(), embedModerator.build(), embedEventer.build(), embedSupport.build())
+                    .addActionRow(selectMenu).queue();
+        }
+    }
+
+    //сообщение отчёта о решённом тикете саппорта
+    public static void sendReportControl(EmbedBuilder embedBuilder, Member control) {
+        TextChannel textChannel = guild.getTextChannelById(CONTROL_REPORT_CHANNEL);
+        assert textChannel != null;
+        Role role = null;
+        if (control.getRoles().contains(guild.getRoleById(EVENTER_CONTROL_ROLE)))
+            role = guild.getRoleById(EVENTER_ROLE);
+        if (control.getRoles().contains(guild.getRoleById(MODERATOR_CONTROL_ROLE)))
+            role = guild.getRoleById(MODERATOR_ROLE);
+        if (control.getRoles().contains(guild.getRoleById(SUPPORT_CONTROL_ROLE)))
+            role = guild.getRoleById(SUPPORT_ROLE);
+        textChannel.sendMessage("### Отчёт о награде стаффа за неделю\nКуратор: " + control.getAsMention() + "\nВетка: " + role.getAsMention()).setEmbeds(embedBuilder.build()).queue();
+    }
+
+    public static void sendReportWarnControl(EmbedBuilder embedBuilder) {
+        TextChannel textChannel = guild.getTextChannelById(CONTROL_REPORT_CHANNEL);
+        assert textChannel != null;
+        textChannel.sendMessage("### Отчёт о выданном предупреждении").setEmbeds(embedBuilder.build()).queue();
+    }
+
+    //магазин 7
+    public static void sendMsgShop() {
+        TextChannel chatChannel = guild.getTextChannelById(SHOP_CHANNEL);
+        if (chatChannel != null) {
+            Button button = Button.primary("open-shop7", "Давай глянем что тут интересненького!").withEmoji(guild.getEmojiById("1238511202385002527"));
+            Button stockButton = Button.secondary("stock-button-shop7", "Инвентарь");
+            EmbedBuilder embedBuilder = new EmbedBuilder();
+            embedBuilder.setColor(Color.orange);
+            embedBuilder.setDescription("# <a:ckook:1193322665906282566> Магазин\n" +
+                    "### Здесь ты можешь добавить индивидуальности своему профилю на сервере!\n### Важно:\n" +
+                    "> **1.** Роли покупаются за монетки -  валюту сервера. \n" +
+                    "> Монетки можно получить с помощью любой активностью на сервере: участием в ивентах, отправкой сообщений, нахождением в войсе или же став частью стаффа сервера!\n" +
+                    "> \n" +
+                    "> **2.** Можно купить **неограниченное** число ролей. Сколько позволяет бюджет :)\n" +
+                    "> \n" +
+                    "> **3.** Роль определяет **цвет отображаемого имени** на сервере, а также **цвет профиля** пользователя при использовании команды **/профиль**.\n" +
+                    "> \n" +
+                    "> **4.** В **инвентаре** можно управлять купленными ролями.\n" +
+                    "> Все роли в магазине **заменяемые**, то есть в твоём профиле будет отображаться только **одна  надетая роль**. Её можно заменить в любой момент какой-либо другой ролью из инвентаря или же просто снять.");
+            embedBuilder.setThumbnail("https://psv4.userapi.com/c909328/u572432973/docs/d7/cbaff48dfccf/shop.gif?extra=7Phmo1TTHUo84Pvlqe_nqP6wMQ3WlS0bbm3S8qr_ezy9SH04RPhutKOnaeVDemmxBs9_qmDMkuqJma07RhbzYybfs5LJXIXT8wMJgHzhBUn0zmFweWWdcS35gXLqNdJekz17ioK26sFzMq67NoNKKgPp");
+            chatChannel.sendMessageEmbeds(embedBuilder.build())
+                    .addActionRow(button, stockButton)
+                    .queue();
+        }
+    }
+
+    public static void sendMsgRole() {
+        TextChannel chatChannel = guild.getTextChannelById(ROLE_CHANNEL);
+        if (chatChannel != null) {
+            EmbedBuilder embedBuilder = new EmbedBuilder();
+            embedBuilder.setColor(Color.orange);
+            embedBuilder.setDescription("# Привет, Новичок! Самый главный вопрос:\n" +
+                    "## Ты белок или желток?");
+            embedBuilder.setThumbnail("https://i.pinimg.com/originals/3b/be/f0/3bbef0137e11b4e94f244ba27696b5e0.gif");
+            Message message = chatChannel.sendMessageEmbeds(embedBuilder.build())
+                    .complete();
+            message.addReaction(guild.getEmojiById(1219669119834656878L)).queue();
+            message.addReaction(guild.getEmojiById(1238511202385002527L)).queue();
+            System.out.println(message.getId());
+        }
+    }
+
 }

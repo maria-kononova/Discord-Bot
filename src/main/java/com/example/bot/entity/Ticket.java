@@ -16,8 +16,11 @@ public class Ticket {
     @Id
     private Long id; //id созданного текстового канала, который предоставляется Discord
     @ManyToOne
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
     private User user; //создатель тикета
-    private Long moderator; //модератор принявший тикет
+    @ManyToOne
+    @JoinColumn(name = "moderator_id", referencedColumnName = "id")
+    private User moderator; //модератор принявший тикет
     private Date dateCreate; //дата создания тикета
     private Date dateClose; //дата закрытия тикета, если не закрыт, значит ещё решает вопрос
     private String typeProblem; //тип проблемы (Вопрос, Нарушение, Баг)
@@ -34,9 +37,5 @@ public class Ticket {
         this.typeProblem = typeProblem;
         this.descriptionProblem = descriptionProblem;
         this.solution = null;
-    }
-
-    public void addModerator(Long idModerator){
-        moderator = idModerator;
     }
 }

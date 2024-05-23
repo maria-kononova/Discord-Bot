@@ -1,15 +1,19 @@
-package com.example.bot;
+package com.example.bot.listeners;
 
+import com.example.bot.BotApplication;
+import com.example.bot.ImageGeneric;
 import com.example.bot.entity.*;
-import com.example.bot.entity.Event;
 import com.example.bot.repository.GifRepository;
 import com.example.bot.repository.UserRepository;
+import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageHistory;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent;
+import net.dv8tion.jda.api.events.interaction.command.GenericCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.events.stage.update.StageInstanceUpdatePrivacyLevelEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.utils.FileUpload;
@@ -19,7 +23,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
 import javax.imageio.ImageIO;
-import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -27,19 +30,46 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ExecutionException;
 
 import static com.example.bot.BotApplication.*;
+import static com.example.bot.listeners.ControlListener.*;
 
 
 @Service
 public class BotCommands extends ListenerAdapter {
-    //UserRepository userRepository = context.getBean(UserRepository.class);
     public static UserRepository userRepository;
     public static GifRepository gifRepository;
 
     @Override
-    public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
+    public void onGuildMemberRemove(@NotNull GuildMemberRemoveEvent event) {
+        changeUserActive(Objects.requireNonNull(event.getMember()).getIdLong(), false);
+    }
+
+    @Override
+    public void onGuildMemberJoin(@NotNull GuildMemberJoinEvent event) {
+        guild = event.getGuild();
+        net.dv8tion.jda.api.entities.User user = event.getUser();
+        BotApplication.bot = event.getJDA();
+
+        if (checkUser(user.getIdLong())) {
+            User newUser = new User(user.getIdLong());
+            userRepository.save(newUser);
+            TextChannel chatChannel = event.getJDA().getTextChannelById("1181324745212436583");
+            if (chatChannel != null) {
+                chatChannel.sendMessage("Кря-кря!!\n<@" + String.valueOf(user.getId()) + ">, с вылуплением на нашем сервере!").queue();
+            }
+        } else {
+            changeUserActive(event.getMember().getIdLong(), true);
+            TextChannel chatChannel = event.getJDA().getTextChannelById("1181324745212436583");
+            if (chatChannel != null) {
+                chatChannel.sendMessage("Что ж\n<@" + String.valueOf(user.getId()) + ">, с возвращением!").queue();
+            }
+        }
+    }
+
+    @Override
+    public void onGenericCommandInteraction(GenericCommandInteractionEvent event) {
         SlashCommand slashCommand = slashCommandRepository.getByName(event.getName());
         switch (slashCommand.getType().getName()) {
             case ("Взаимодействие"): {
@@ -105,13 +135,52 @@ public class BotCommands extends ListenerAdapter {
                             ImageIO.write(image, "png", outputfile);
                             FileUpload fileUpload = FileUpload.fromData(outputfile);
                             event.getHook().sendMessage("").addFiles(fileUpload).queue();
-                            //event.getHook().sendMessage("").addFiles().setEphemeral(true).queue();
                         } catch (IOException e) {
                             e.printStackTrace();
                         } catch (Exception e) {
                             throw new RuntimeException(e);
                         }
                         break;
+                    }
+                    case ("тайм-аут"): {
+                        String type = (Objects.requireNonNull(event.getOption("тип"))).getAsString();
+                        String comment = (Objects.requireNonNull(event.getOption("комментарий"))).getAsString();
+                        Member tagUserId = guild.getMemberById(Objects.requireNonNull(event.getOption("пользователь")).getAsUser().getIdLong());
+                        Violation violation = null;
+                        for (Violation v : violationRepository.findAll()) {
+                            if (v.getName().equalsIgnoreCase(type)) {
+                                violation = v;
+                                break;
+                            }
+                        }
+                        if (violation != null) {
+                            try {
+                                ModerationListener.warningUser(tagUserId, event.getMember(), violation, comment);
+                            } catch (ExecutionException e) {
+                                event.deferReply(true).setContent("Что-то пошло не так, попробуй позже или используй слэш-комнады.").queue();
+                            } catch (InterruptedException e) {
+                                event.deferReply(true).setContent("Что-то пошло не так, попробуй позже или используй слэш-комнады.").queue();
+                            }
+                            event.deferReply(true).setContent("Нарушение пользователя успешно зафиксированно.").queue();
+                        } else {
+                            //selectmenu
+                            event.deferReply(true).setContent("Утёнок не нашёл такого нарушения. Загляни ещё раз разок в информацию для модераторов.")
+                                    .addActionRow(ModerationListener.getSelectionMenuOfViolation())
+                                    .queue();
+                        }
+                        break;
+                    }
+
+                    case ("предупреждение-стафф"): {
+                        String comment = (Objects.requireNonNull(event.getOption("комментарий"))).getAsString();
+                        Member tagUserId = guild.getMemberById(Objects.requireNonNull(event.getOption("пользователь")).getAsUser().getIdLong());
+                        if (ControlListener.getRoleStaffFromControl(event.getMember()) == ControlListener.getRoleMemberStaff(tagUserId)) {
+                            Violation violation = violationRepository.getViolationByName("Предупреждение стаффа");
+                                ModerationListener.warningUserStaff(tagUserId, event.getMember(), violation, comment);
+                            event.deferReply(true).setContent("Пользователю успешно выдано предупреждение.").queue();
+
+                        } else
+                            event.deferReply(true).setContent("Данный пользовтель не является частью стаффа или у него нет роли " + ControlListener.getRoleStaffFromControl(event.getMember()).getAsMention()).queue();
                     }
                 }
             }
@@ -134,7 +203,22 @@ public class BotCommands extends ListenerAdapter {
                             SlashCommand slCmd = slashCommandRepository.getByName(nameCmd);
                             checkServer.createSlashCommand(slCmd);
                             event.deferReply(true).setContent(slashCommand.getReply() + "\n" + checkServer.result).queue();
-                        }
+                        } else event.deferReply(true).setContent("Утёнок не нашёл такой команды в базе.").queue();
+                        break;
+                    }
+                    case ("удаление_команды"): {
+                        String nameCmd = (Objects.requireNonNull(event.getOption("команда"))).getAsString();
+                        if (slashCommandRepository.getByName(nameCmd) != null) {
+                            SlashCommand slCmd = slashCommandRepository.getByName(nameCmd);
+                            try {
+                                checkServer.deleteSlashCommand(slCmd);
+                                event.deferReply(true).setContent(slashCommand.getReply() + "\n" + checkServer.result).queue();
+                            } catch (ExecutionException e) {
+                                event.deferReply(true).setContent("Что-то пошло не так.").queue();
+                            } catch (InterruptedException e) {
+                                event.deferReply(true).setContent("Что-то пошло не так.").queue();
+                            }
+                        } else event.deferReply(true).setContent("Утёнок не нашёл такой команды.").queue();
                         break;
                     }
                     case ("обновление_войсов"): {
@@ -162,11 +246,11 @@ public class BotCommands extends ListenerAdapter {
                         }
                         break;
                     }
-                    case("баннер_ивента"):{
+                    case ("баннер_ивента"): {
                         event.deferReply().queue();
                         if (event.getOption("ивент", OptionMapping::getAsString) != null) {
                             EventType ev = eventTypeRepository.getEventTypeByName(event.getOption("ивент", OptionMapping::getAsString));
-                            if(ev!=null){
+                            if (ev != null) {
                                 try {
                                     ImageGeneric imageGeneric = new ImageGeneric();
                                     BufferedImage image = imageGeneric.genericImageEvent(ev);
@@ -180,8 +264,7 @@ public class BotCommands extends ListenerAdapter {
                                 } catch (Exception e) {
                                     throw new RuntimeException(e);
                                 }
-                            }
-                            else event.deferReply(true).setContent("Ивент не найден.").queue();
+                            } else event.deferReply(true).setContent("Ивент не найден.").queue();
                         }
                         break;
                     }
@@ -189,74 +272,6 @@ public class BotCommands extends ListenerAdapter {
             }
             default:
                 event.deferReply(true).setContent("Работаем над этим вопросом").setEphemeral(true).queue();
-        }
-        /*if (event.getOption("user", OptionMapping::getAsUser) != null) {
-            event.deferReply().queue();
-            long tagUserId = Objects.requireNonNull(event.getOption("user")).getAsUser().getIdLong();
-            long user = Objects.requireNonNull(event.getMember()).getIdLong();
-            event.getHook().sendMessage("<@" + user + "> укусил " + "<@" + tagUserId + ">" ).setEphemeral(true).queue();
-        } else {
-            event.deferReply(true).setContent("Необходимо выбрать кого кусать").setEphemeral(true).queue();
-            //event.getHook().sendMessage("Необходимо выбрать кого кусать").setEphemeral(true).queue();
-            // event.deferReply(true).setContent("Необходимо выбрать кого кусать").queue();
-        }*/
-
-       /*switch (event.getName()) {
-            case ("крякни"): {
-                event.deferReply().queue();
-                event.getHook().sendMessage("КРЯ").setEphemeral(true).queue();
-                break;
-            }
-            case ("монетки"): {
-                event.deferReply().queue();
-                if (event.getOption("user", OptionMapping::getAsString) == null) {
-                    User user = userRepository.getUserById(Objects.requireNonNull(event.getMember()).getIdLong());
-                    event.getHook().sendMessage("У тебя ровно " + user.getCoins() + " монеток").setEphemeral(true).queue();
-                } else {
-                    long tagUserId = getId((Objects.requireNonNull(event.getOption("user"))).getAsString());
-                    User user = userRepository.getUserById(tagUserId);
-                    event.getHook().sendMessage("У <@" + tagUserId + "> ровно " + user.getCoins() + " монеток. Прошу не завидовать!").setEphemeral(true).queue();
-                }
-                break;
-            }
-            case ("мяу"): {
-                event.deferReply().queue();
-                event.getHook().sendMessage("Виу-Виу!\n<@&1181323632639754330>, Кофка раскрыта, ловите её!! ").setEphemeral(true).queue();
-                break;
-            }
-            case ("прогресс"): {
-                event.deferReply().queue();
-                User user = userRepository.getUserById(Objects.requireNonNull(event.getMember()).getIdLong());
-                event.getHook().sendMessage("У тебя " + user.getLvl() + " лвл " + user.expOnLvl() + " / " + user.expToNextLvl(user.getLvl())).setEphemeral(true).queue();
-                break;
-            }
-        }*/
-    }
-
-    @Override
-    public void onGuildMemberRemove(@NotNull GuildMemberRemoveEvent event) {
-        changeUserActive(Objects.requireNonNull(event.getMember()).getIdLong(), false);
-    }
-
-    @Override
-    public void onGuildMemberJoin(@NotNull GuildMemberJoinEvent event) {
-        guild = event.getGuild();
-        net.dv8tion.jda.api.entities.User user = event.getUser();
-        BotApplication.bot = event.getJDA();
-
-        if (checkUser(user.getIdLong())) {
-            User newUser = new User(user.getIdLong());
-            userRepository.save(newUser);
-            TextChannel chatChannel = event.getJDA().getTextChannelById("1181324745212436583");
-            if (chatChannel != null) {
-                chatChannel.sendMessage("Кря-кря!!\n<@" + String.valueOf(user.getId()) + ">, с вылуплением на нашем сервере!").queue();
-            }
-        } else {
-            changeUserActive(event.getMember().getIdLong(), true);
-            TextChannel chatChannel = event.getJDA().getTextChannelById("1181324745212436583");
-            if (chatChannel != null) {
-                chatChannel.sendMessage("Что ж\n<@" + String.valueOf(user.getId()) + ">, с возвращением!").queue();
-            }
         }
     }
 

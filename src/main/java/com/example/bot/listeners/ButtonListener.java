@@ -1,4 +1,4 @@
-package com.example.bot.events;
+package com.example.bot.listeners;
 
 import jakarta.validation.constraints.NotNull;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;

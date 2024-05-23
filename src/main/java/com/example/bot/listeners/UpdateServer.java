@@ -1,4 +1,4 @@
-package com.example.bot;
+package com.example.bot.listeners;
 
 
 import com.example.bot.entity.User;
@@ -19,7 +19,7 @@ import java.util.Objects;
 import java.util.logging.Logger;
 
 import static com.example.bot.BotApplication.guild;
-import static com.example.bot.BotCommands.userRepository;
+import static com.example.bot.listeners.BotCommands.userRepository;
 
 
 @Service

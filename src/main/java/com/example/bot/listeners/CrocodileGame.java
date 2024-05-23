@@ -1,7 +1,12 @@
-package com.example.bot;
+package com.example.bot.listeners;
 
 import com.example.bot.entity.Crocodile;
+import com.example.bot.entity.EventUser;
+import com.example.bot.entity.User;
+import com.example.bot.entity.Warning;
 import jakarta.validation.constraints.NotNull;
+import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
@@ -10,26 +15,21 @@ import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.ItemComponent;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.ResourceLoader;
-import org.springframework.stereotype.Component;
 
 
+import java.awt.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.example.bot.BotApplication.*;
-import static com.example.bot.BotCommands.userRepository;
+import static com.example.bot.SystemMessage.sendMsgFormPost;
+import static com.example.bot.listeners.BotCommands.userRepository;
 import static com.example.bot.SystemMessage.CROCODILE_GAME;
 
 public class CrocodileGame extends ListenerAdapter {
@@ -72,21 +72,6 @@ public class CrocodileGame extends ListenerAdapter {
     public void onButtonInteraction(@NotNull ButtonInteractionEvent event) {
         if (event.getButton().getId().contains("crocodile-game2")) {
             switch (event.getButton().getId()) {
-//                //Начало игры
-//                case ("start-crocodile-game2"): {
-//                    if (crocodileGame == null) {
-//                        event.deferReply().queue();
-//                        User user = userRepository.getUserById(event.getUser().getIdLong());
-//                        crocodileGame = new CrocodileGame(user.getId());
-//                        crocodileGameRepository.save(crocodileGame);
-//                        Button takeWordButton = Button.of(ButtonStyle.PRIMARY, "take-word-crocodile-game2", "Взять слово");
-//
-//                        Collection<ActionRow> actionRows = new ArrayList<>();
-//                        actionRows.add(ActionRow.of(takeWordButton));
-//                        event.getHook().sendMessage("Игра началась! Принимайте участие").addComponents(actionRows).queue();
-//                    } else event.deferReply(true).setContent("Игра уже идёт, присоединяйся!").queue();
-//                    break;
-//                }
                 case ("take-word-crocodile-game2"): {
                     if (userPlay == null) {
                         //присоединение пользователя к игре крокодила
@@ -135,7 +120,7 @@ public class CrocodileGame extends ListenerAdapter {
                     }
                     break;
                 }
-                case("end-crocodile-game2"):{
+                case ("end-crocodile-game2"): {
                     stopTimer();
                     Button takeWordButton = Button.of(ButtonStyle.PRIMARY, "take-word-crocodile-game2", "Взять новое слово");
                     Collection<ActionRow> actionRows = new ArrayList<>();
@@ -144,8 +129,77 @@ public class CrocodileGame extends ListenerAdapter {
                     userPlay = null;
                     break;
                 }
+                case ("statistics-crocodile-game2"): {
+                    EmbedBuilder embedBuilder = getStatisticsOfUser(event.getMember());
+                    if(embedBuilder != null){
+                        Button button = Button.success("update-statistics-crocodile-game2", "Обновить");
+                        event.deferReply(true).setEmbeds(getStatisticsOfUser(event.getMember()).build())
+                                .addActionRow(button)
+                                .queue();
+                    }
+                    else event.deferReply(true).setContent("Статистика отсутствует. Скорее присоединяйся к игре!").queue();
+                }
+                case ("update-statistics-crocodile-game2"): {
+                    event.deferEdit().setEmbeds(getStatisticsOfUser(event.getMember()).build()).queue();
+                }
+                case("best-players-crocodile-game2"):{
+                    EmbedBuilder embedBuilder = getRatingsBestPlayers();
+                    if(embedBuilder != null){
+                        Button button = Button.success("update-rating-crocodile-game2", "Обновить");
+                        event.deferReply(true).setEmbeds(getRatingsBestPlayers().build())
+                                .addActionRow(button)
+                                .queue();
+                    }
+                    else event.deferReply(true).setContent("Рейтинг отсутствует. Скорее начинайте игру!").queue();
+                }
+                case("update-rating-crocodile-game2"):{
+                    event.deferEdit().setEmbeds(getRatingsBestPlayers().build()).queue();
+                }
             }
         }
+    }
+
+    public EmbedBuilder getRatingsBestPlayers(){
+        List<Crocodile> crocodiles = getListCrocodileSortedByScore();
+        if(crocodiles.size() != 0){
+            EmbedBuilder embedBuilder = new EmbedBuilder();
+            embedBuilder.setColor(Color.decode("#248046"));
+            embedBuilder.setTitle("Рейтинг игроков");
+            int i = 1;
+            for(Crocodile crocodile : crocodiles){
+                if(i<=10){
+                    embedBuilder.addField(i + ". " + guild.getMemberById(crocodile.getUser().getId()).getEffectiveName(), "**Набранно очков:  " + crocodile.getScore() + "**", false );
+                    i++;
+                }else break;
+            }
+            return embedBuilder;
+        }
+        return null;
+    }
+
+    public List<Crocodile> getListCrocodileSortedByScore(){
+        List<Crocodile> crocodiles = crocodileRepository.findAll();
+        Comparator<Crocodile> comparator = Comparator.comparing(Crocodile::getScore);
+        crocodiles.sort(comparator);
+        Collections.reverse(crocodiles);
+        return crocodiles;
+    }
+
+    public EmbedBuilder getStatisticsOfUser(Member member) {
+        User user = userRepository.getUserById(member.getIdLong());
+        Crocodile crocodile = crocodileRepository.findByUser(user);
+        if (crocodile != null) {
+            EmbedBuilder embedBuilder = new EmbedBuilder();
+            embedBuilder.setColor(Color.decode("#248046"));
+            embedBuilder.setTitle("Статистика  " + member.getEffectiveName());
+            embedBuilder.setThumbnail("https://media.tenor.com/B-h20huQWAYAAAAi/hide-water.gif");
+            embedBuilder.setDescription("### Топ:   **" + 1 + "**  |||  Рейтинг:   **" + crocodile.getScore() + "**");
+            embedBuilder.addField("Отгадано слов:", "> **" + String.valueOf(crocodile.getGuessedWords()) + "**", true);
+            embedBuilder.addField("Загадано слов:", "> **" + String.valueOf(crocodile.getSetWords()) + "**", true);
+            embedBuilder.addField("Штрафы:", "> **" + String.valueOf(crocodile.getPenalty()) + "**", true);
+            return embedBuilder;
+        }
+        return null;
     }
 
     //проверка угаданного слова
@@ -172,7 +226,8 @@ public class CrocodileGame extends ListenerAdapter {
                     if (hasMessageFromUserPlay) {
                         String penaltyString = "";
                         if (crocodileGuess.getPenalty() != 0) {
-                            if(crocodileGuess.getPenalty() - 1 > 0) penaltyString = "\nОставшиеся штрафы:" + (crocodileGuess.getPenalty() - 1);
+                            if (crocodileGuess.getPenalty() - 1 > 0)
+                                penaltyString = "\nОставшиеся штрафы: **" + (crocodileGuess.getPenalty() - 1) + "**";
                             else penaltyString = "\nСо штрафами покончено. Можешь загадывать слова!";
                         }
                         event.getMessage().reply("<@" + event.getAuthor().getIdLong() + "> " + getPhraseGuessWord() + penaltyString).addComponents(actionRows).queue();

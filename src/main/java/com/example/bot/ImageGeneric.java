@@ -3,24 +3,21 @@ package com.example.bot;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
-import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
-import java.awt.image.Raster;
-import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.Random;
 
-import com.example.bot.entity.Event;
 import com.example.bot.entity.EventType;
 import com.example.bot.entity.User;
 import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.Role;
 import org.imgscalr.Scalr;
 
 import static com.example.bot.BotApplication.guild;
-import static com.example.bot.BotCommands.userRepository;
+import static com.example.bot.BotApplication.rolesRepository;
+import static com.example.bot.listeners.BotCommands.userRepository;
 
 public class ImageGeneric {
 
@@ -39,10 +36,22 @@ public class ImageGeneric {
     public ImageGeneric() {
     }
 
+    public Color getColorOfRoleMember(Member member) {
+        for (Role role : member.getRoles()) {
+            if (rolesRepository.getRolesById(Long.parseLong(role.getId())) != null){
+                return Color.decode(rolesRepository.getRolesById(Long.parseLong(role.getId())).getColor());
+            }
+        }
+        return Color.orange;
+    }
+
     public BufferedImage genericImage(Long userId) throws Exception {
+        Member member = guild.getMemberById(userId);
+        assert member != null;
+        User user = userRepository.getUserById(userId);
         //жёлтый
-        colorSecondary = Color.decode("#ff8c00");
-        colorPrimary = Color.orange;
+        colorSecondary = getColorOfRoleMember(member);
+        colorPrimary = colorSecondary.brighter();
         //зелёный
         /*colorSecondary = Color.decode("#138708");
         colorPrimary = Color.decode("#20e80e");*/
@@ -55,11 +64,6 @@ public class ImageGeneric {
 
         BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         Graphics2D graphics = image.createGraphics();
-
-        Member member = guild.getMemberById(userId);
-        assert member != null;
-        User user = userRepository.getUserById(userId);
-
 
         // Устанавливаем параметры сглаживания масштабирования
         graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
@@ -251,10 +255,10 @@ public class ImageGeneric {
         graphics.drawString(event.getName(), 570 - getXMinusForNameEvent(event.getName()), 780);*/
 
         graphics.setColor(colorSecondary);
-        graphics.fillRect(580 - getXMinusForNameEvent(event.getName()), 620, 900 + getPlusWidthEventLine(event.getName()) , 20);
+        graphics.fillRect(580 - getXMinusForNameEvent(event.getName()), 620, 900 + getPlusWidthEventLine(event.getName()), 20);
         graphics.fillRect(540 - getXMinusForNameEvent(event.getName()), 660, 1000 + getPlusWidthEventLine(event.getName()), 25);
         graphics.setColor(colorPrimary);
-        graphics.fillRect(570 - getXMinusForNameEvent(event.getName()), 610, 900 +  getPlusWidthEventLine(event.getName()), 20);
+        graphics.fillRect(570 - getXMinusForNameEvent(event.getName()), 610, 900 + getPlusWidthEventLine(event.getName()), 20);
         graphics.fillRect(530 - getXMinusForNameEvent(event.getName()), 650, 1000 + getPlusWidthEventLine(event.getName()), 25);
 
         //graphics.drawString(user.getId().toString(), 150, 100);
@@ -262,13 +266,13 @@ public class ImageGeneric {
         return image;
     }
 
-    public int getPlusWidthEventLine(String name){
+    public int getPlusWidthEventLine(String name) {
         int size = getFontSizeForNameEvent(250, name);
-        if(name.length() <=5 ) return 0;
-        if(name.length() <=6 ) return (name.length() - 5) * 100;
-        if(name.length() <= 10) return (name.length() - 5) * 140;
-        if(name.length() <= 15) return (name.length() - 5) * 100;
-        if(name.length() <= 20) return (name.length() - 5) * 60;
+        if (name.length() <= 5) return 0;
+        if (name.length() <= 6) return (name.length() - 5) * 100;
+        if (name.length() <= 10) return (name.length() - 5) * 140;
+        if (name.length() <= 15) return (name.length() - 5) * 100;
+        if (name.length() <= 20) return (name.length() - 5) * 60;
         return (name.length() - 5) * 90;
     }
 
@@ -334,7 +338,7 @@ public class ImageGeneric {
             for (int y = 0; y < image.getHeight(); y++) {
                 int rgb = image.getRGB(x, y);
                 if (rgb == Color.decode("#fafafa").getRGB() || rgb == Color.decode("#ffffff").getRGB() ||
-                rgb == Color.decode("#9f9f9").getRGB()) {
+                        rgb == Color.decode("#9f9f9").getRGB()) {
                     replacedImage.setRGB(x, y, color2.getRGB());
                 }
             }

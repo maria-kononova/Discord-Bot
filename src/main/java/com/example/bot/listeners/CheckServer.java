@@ -1,4 +1,4 @@
-package com.example.bot;
+package com.example.bot.listeners;
 
 import com.example.bot.entity.*;
 import net.dv8tion.jda.api.Permission;
@@ -7,21 +7,22 @@ import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
+import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 import net.dv8tion.jda.api.requests.RestAction;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static com.example.bot.BotApplication.*;
 import static com.example.bot.BotApplication.guild;
-import static com.example.bot.BotCommands.userRepository;
+import static com.example.bot.listeners.BotCommands.userRepository;
+import static com.example.bot.listeners.ControlListener.*;
 
 @Service
 @Configuration
@@ -81,13 +82,23 @@ public class CheckServer {
                 optionsList.add(optionData);
             }
         }
-        if (!slCmd.getPermissions().equals("ADMINISTRATOR")) {
-            Command command = guild.upsertCommand(slCmd.getName(), slCmd.getDescription()).addOptions(optionsList).complete();
-        } else {
+        if (slCmd.getPermissions().equals("ADMINISTRATOR")) {
             Command command = guild.upsertCommand(slCmd.getName(), slCmd.getDescription()).addOptions(optionsList).setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.MANAGE_CHANNEL, Permission.ADMINISTRATOR)).complete();
+        } else if (slCmd.getPermissions().equals("MODERATION")) {
+            Command command = guild.upsertCommand(slCmd.getName(), slCmd.getDescription()).addOptions(optionsList).setDefaultPermissions(DefaultMemberPermissions.enabledFor(guild.getRoleById(MODERATOR_ROLE).getPermissionsRaw())).complete();
+        } else if (slCmd.getPermissions().equals("CONTROL")) {
+            Command command = guild.upsertCommand(slCmd.getName(), slCmd.getDescription()).addOptions(optionsList).setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.VOICE_MOVE_OTHERS)).complete();
         }
-        //.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.MANAGE_CHANNEL, Permission.ADMINISTRATOR))
-        result = "";
+        else {
+            Command command = guild.upsertCommand(slCmd.getName(), slCmd.getDescription()).addOptions(optionsList).complete();
+        }
+    //.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.MANAGE_CHANNEL, Permission.ADMINISTRATOR))
+    result ="";
+}
+
+    public void deleteSlashCommand(SlashCommand slCmd) throws ExecutionException, InterruptedException {
+       guild.deleteCommandById(getIdCommandOnServer(slCmd.getName())).queue();
+        result ="";
     }
 
     //проверяет, есть ли команда на сервере по её названию
@@ -113,7 +124,7 @@ public class CheckServer {
         String result = "";
         List<Member> members = guild.getMembers();
         for (Member member : members) {
-            if (member.getUser().getName().equals(nameUser)) {
+            if (member.getUser().getEffectiveName().equals(nameUser) || member.getUser().getName().equals(nameUser)) {
                 result = member.getId();
                 break;
             }
@@ -127,7 +138,7 @@ public class CheckServer {
 
         guild.retrieveCommands().queue(commands -> {
             for (Command command : commands) {
-                if (command.getName().equals(commandName)) {
+                if (command.getName().equalsIgnoreCase(commandName)) {
                     result1.complete(command.getId());
                     break;
                 }

@@ -1,47 +1,26 @@
-package com.example.bot;
+package com.example.bot.listeners;
 
+import com.example.bot.SystemMessage;
 import com.example.bot.entity.*;
 import com.example.bot.entity.Event;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.MessageActivity;
-import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
-import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
-import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
-import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.GenericSelectMenuInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import net.dv8tion.jda.api.interactions.Interaction;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.ItemComponent;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
-import net.dv8tion.jda.api.interactions.components.selections.EntitySelectMenu;
-import net.dv8tion.jda.api.interactions.components.selections.SelectMenu;
 import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
 import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import net.dv8tion.jda.api.interactions.modals.Modal;
-import net.dv8tion.jda.api.interactions.modals.ModalInteraction;
-import net.dv8tion.jda.api.interactions.modals.ModalMapping;
-import net.dv8tion.jda.api.utils.data.DataObject;
-import net.dv8tion.jda.internal.interactions.component.SelectMenuImpl;
 import net.dv8tion.jda.internal.interactions.component.StringSelectMenuImpl;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.EnableAsync;
-import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
-import org.w3c.dom.Text;
 
-import javax.swing.*;
 import java.awt.*;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -51,11 +30,9 @@ import java.time.ZoneId;
 import java.util.*;
 import java.util.List;
 import java.util.Timer;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 
 import static com.example.bot.BotApplication.*;
-import static com.example.bot.BotCommands.userRepository;
+import static com.example.bot.listeners.BotCommands.userRepository;
 import static com.example.bot.SystemMessage.*;
 import static java.time.DayOfWeek.MONDAY;
 import static java.time.DayOfWeek.SUNDAY;
@@ -150,15 +127,7 @@ public class EventListener extends ListenerAdapter {
                                     List<ItemComponent> components = new ArrayList<>();
                                     components.add(acceptPrizeButton);
                                     components.add(editPrizeButton);
-
-                                    event.deferReply(true).setContent("## Можно выдать награду события!\n" +
-                                            "Ивент успешно был проведён и закончен. Осталось дело за малым - выдать награду участникам!\n" +
-                                            "> - Изначально в списке указана **награда за участие**. \n" +
-                                            "> - Mожно **изменить** общее количество монеток, которые заработал участник.\n" +
-                                            "> - Можно указать **0**, если участник не был активен на ивенте.\n" +
-                                            "### Кнопки:\n" +
-                                            "> <:check_mark:"+EMOJI_CHECK_MARK+"> Подтвердить - выдать указанные в списке награды всем участникам.\n" +
-                                            "> <:edit:"+EMOJI_EDIT+">  - Отредактировать награду для участника (указывая его номер по списку).\n").setEmbeds(embedBuilder.build()).addActionRow(components).queue();
+                                    event.deferReply(true).setEmbeds(getPrizeEventControl(ev).build(), embedBuilder.build()).addActionRow(components).queue();
                                 } else {
                                     SystemMessage.sendReportAboutEvent(ev, eventUsers, event.getMember());
                                     event.deferReply(true).setContent("Участники события не найдены. Ивент будет удалён :с").queue();
@@ -276,6 +245,20 @@ public class EventListener extends ListenerAdapter {
         }
     }
 
+    public EmbedBuilder getPrizeEventControl(Event ev){
+        EmbedBuilder embedBuilderControl = new EmbedBuilder();
+        embedBuilderControl.setColor(Color.decode(ev.getType().getColor()));
+        embedBuilderControl.setDescription("## Можно выдать награду события!\n" +
+                "Ивент успешно был проведён и закончен. Осталось дело за малым - выдать награду участникам!\n" +
+                "> - Изначально в списке указана **награда за участие**. \n" +
+                "> - Mожно **изменить** общее количество монеток, которые заработал участник.\n" +
+                "> - Можно указать **0**, если участник не был активен на ивенте.\n" +
+                "### Кнопки:\n" +
+                "> <:check_mark:"+EMOJI_CHECK_MARK+"> Подтвердить - выдать указанные в списке награды всем участникам.\n" +
+                "> <:edit:"+EMOJI_EDIT+">  - Отредактировать награду для участника (указывая его номер по списку).\n");
+        return embedBuilderControl;
+    }
+
     @Override
     public void onGenericSelectMenuInteraction(GenericSelectMenuInteractionEvent event) {
         if (event.getComponent().getId().contains("select-event4")) {
@@ -309,21 +292,7 @@ public class EventListener extends ListenerAdapter {
                     Event newEvent = eventRepository.getEventById(Long.valueOf(value));
                     if (newEvent != null) {
                         Member member = event.getMember();
-                        event.deferReply(true).setContent("## Управление ивентом\n" +
-                                "Здесь можно выполнить всё необходимое по ивенту!\n" +
-                                "**Важные детали:**\n" +
-                                "> - Начать ивент можно только в **запланированную** дату.\n" +
-                                "> - Отправить уведомление можно только **1 раз**. \n" +
-                                "> - Удалить ивент можно только если он **не был начат**.\n" +
-                                "> - После завершения ивента, даже в случае отсутствия на нём участников, \n" +
-                                ">  нужно нажать на кнопку **«Выдать награду»**. Данное действие отправить отчёт о\n" +
-                                ">  проведённом мероприятии куратору.\n" +
-                                "\n**Кнопки для управления:**\n" +
-                                "> <:start:"+EMOJI_START+">  - Начать ивент.\n" +
-                                "> <:notification:"+EMOJI_NOTIFICATION+">  - Отправить уведомление об ивенте.\n" +
-                                "> <:END:"+EMOJI_END+">  - Закончить ивент.\n" +
-                                "> <:delete:"+EMOJI_DELETE+">  - Удалить ивент.\n" +
-                                "> <:prize:"+EMOJI_PRIZE+">  - Выдать награду.").setEmbeds(getEmbedMsg(newEvent, member).build()).addActionRow(getButtonForEventShow(newEvent)).queue();
+                        event.deferReply(true).setEmbeds(getEventControlMsg(newEvent).build(),getEmbedMsg(newEvent, member).build()).addActionRow(getButtonForEventShow(newEvent)).queue();
                     }
                     event.deferReply(true).setContent("Нет данного ивента.").queue();
                 }
@@ -331,6 +300,24 @@ public class EventListener extends ListenerAdapter {
                     event.deferReply(true).setContent("Работаем над этим вопросом").queue();
             }
         }
+    }
+
+    public EmbedBuilder getEventControlMsg(Event event){
+       return new EmbedBuilder().setColor(Color.decode(event.getType().getColor())).setDescription("## Управление ивентом\n" +
+                "Здесь можно выполнить всё необходимое по ивенту!\n" +
+                "**Важные детали:**\n" +
+                "> - Начать ивент можно только в **запланированную** дату.\n" +
+                "> - Отправить уведомление можно только **1 раз**. \n" +
+                "> - Удалить ивент можно только если он **не был начат**.\n" +
+                "> - После завершения ивента, даже в случае отсутствия на нём участников, \n" +
+                ">  нужно нажать на кнопку **«Выдать награду»**. Данное действие отправить отчёт о\n" +
+                ">  проведённом мероприятии куратору.\n" +
+                "\n**Кнопки для управления:**\n" +
+                "> <:start:"+EMOJI_START+">  - Начать ивент.\n" +
+                "> <:notification:"+EMOJI_NOTIFICATION+">  - Отправить уведомление об ивенте.\n" +
+                "> <:END:"+EMOJI_END+">  - Закончить ивент.\n" +
+                "> <:delete:"+EMOJI_DELETE+">  - Удалить ивент.\n" +
+                "> <:prize:"+EMOJI_PRIZE+">  - Выдать награду.");
     }
 
     public List<ItemComponent> getButtonForEventShow(Event newEvent) {
@@ -411,21 +398,7 @@ public class EventListener extends ListenerAdapter {
                             Event newEvent = new Event(dateTime, eventType, userRepository.getUserById(member.getIdLong()));
                             eventRepository.save(newEvent);
 
-                            event.deferReply(true).setContent("## Управление ивентом\n" +
-                                    "Здесь можно выполнить всё необходимое по ивенту!\n" +
-                                    "**Важные детали:**\n" +
-                                    "> - Начать ивент можно только в **запланированную** дату.\n" +
-                                    "> - Отправить уведомление можно только **1 раз**. \n" +
-                                    "> - Удалить ивент можно только если он **не был начат**.\n" +
-                                    "> - После завершения ивента, даже в случае отсутствия на нём участников, \n" +
-                                    ">  нужно нажать на кнопку **«Выдать награду»**. Данное действие отправить отчёт о\n" +
-                                    ">  проведённом мероприятии куратору.\n" +
-                                    "\n**Кнопки для управления:**\n" +
-                                    "> <:start:"+EMOJI_START+">  - Начать ивент.\n" +
-                                    "> <:notification:"+EMOJI_NOTIFICATION+">  - Отправить уведомление об ивенте.\n" +
-                                    "> <:END:"+EMOJI_END+">  - Закончить ивент.\n" +
-                                    "> <:delete:"+EMOJI_DELETE+">  - Удалить ивент.\n" +
-                                    "> <:prize:"+EMOJI_PRIZE+">  - Выдать награду.").setEmbeds(getEmbedMsg(newEvent, member).build()).addActionRow(getButtonForEventShow(newEvent)).queue();
+                            event.deferReply(true).setEmbeds(getEventControlMsg(newEvent).build(), getEmbedMsg(newEvent, member).build()).addActionRow(getButtonForEventShow(newEvent)).queue();
                         } else {
                             Button graphicButton = Button.of(ButtonStyle.PRIMARY, "graphic-event4", "Расписание ивентов").withEmoji(guild.getEmojiById(EMOJI_CALENDAR));
                             event.deferReply(true).setContent("Ошибка создания мероприятия: на данную дату уже запланированно событие!\nУтёнок советует ознакомиться с акктуальным расписанием:")

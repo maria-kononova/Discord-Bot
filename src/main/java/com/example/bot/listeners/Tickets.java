@@ -1,34 +1,22 @@
-package com.example.bot;
+package com.example.bot.listeners;
 
+import com.example.bot.SystemMessage;
 import com.example.bot.entity.Ticket;
-import com.example.bot.entity.User;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
-import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.GenericSelectMenuInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
-import net.dv8tion.jda.api.interactions.components.Component;
-import net.dv8tion.jda.api.interactions.components.ItemComponent;
-import net.dv8tion.jda.api.interactions.components.buttons.Button;
-import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
 import net.dv8tion.jda.api.interactions.components.selections.SelectMenu;
 import net.dv8tion.jda.api.interactions.components.selections.EntitySelectMenu;
-import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
 import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import net.dv8tion.jda.api.interactions.modals.Modal;
 import net.dv8tion.jda.api.interactions.modals.ModalMapping;
-import net.dv8tion.jda.internal.entities.channel.concrete.TextChannelImpl;
-import net.dv8tion.jda.internal.interactions.component.SelectMenuImpl;
-import net.dv8tion.jda.internal.interactions.component.StringSelectMenuImpl;
-import org.springframework.boot.origin.SystemEnvironmentOrigin;
-import org.w3c.dom.Text;
 
 import java.awt.*;
 import java.util.*;
@@ -36,7 +24,8 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import static com.example.bot.BotApplication.*;
-import static com.example.bot.BotCommands.userRepository;
+import static com.example.bot.listeners.BotCommands.userRepository;
+import static com.example.bot.listeners.ControlListener.*;
 
 public class Tickets extends ListenerAdapter {
     public String TICKET_CATEGORY = "1238866706156355614";
@@ -44,7 +33,7 @@ public class Tickets extends ListenerAdapter {
     public String ROLE_MODERATOR = "1181335111652880467";
     public String ROLE_MODERATOR_CONTROL = "1181335102790303854";
     public String ROLE_ADMINISTRATOR = "1181323632639754330";
-
+    public String ROLE_DEVELOPER = "1181347862781644821";
 
     @Override
     public void onButtonInteraction(ButtonInteractionEvent event) {
@@ -53,13 +42,13 @@ public class Tickets extends ListenerAdapter {
                 case ("close-ticket3"): {
                     TextChannel textChannel = event.getChannel().asTextChannel();
                     Ticket ticket = ticketRepository.getTicketById(textChannel.getIdLong());
-                    if (ticket.getModerator() != null){
-                        if (ticket.getModerator() == event.getMember().getIdLong()) {
+                    if (ticket.getModerator() != null) {
+                        System.out.println(ticket.getModerator());
+                        System.out.println(userRepository.getUserById(event.getMember().getIdLong()));
+                        if (ticket.getModerator().getId() == event.getMember().getIdLong()) {
                             SystemMessage.sendMsgCloseTicket(textChannel, ticket.getModerator());
-                        }
-                        else event.deferReply(true).setContent("Ты не можеть закончить обсуждение тикета :с").queue();
-                    }
-                    else event.deferReply(true).setContent("Ты не можеть закончить обсуждение тикета :с").queue();
+                        } else event.deferReply(true).setContent("Ты не можеть закончить обсуждение тикета :с").queue();
+                    } else event.deferReply(true).setContent("Ты не можеть закончить обсуждение тикета :с").queue();
                     break;
                 }
                 case ("add-user-in-ticket3"): {
@@ -73,7 +62,7 @@ public class Tickets extends ListenerAdapter {
                 case ("solution-button-ticket3"): {
                     TextChannel textChannel = event.getChannel().asTextChannel();
                     Ticket ticket = ticketRepository.getTicketById(textChannel.getIdLong());
-                    if (ticket.getModerator() == event.getMember().getIdLong()) {
+                    if (ticket.getModerator().getId() == event.getMember().getIdLong()) {
                         TextInput textInput = TextInput.create("solution-ticket3", "Описание решения", TextInputStyle.PARAGRAPH)
                                 .setMaxLength(500)
                                 .build();
@@ -83,20 +72,24 @@ public class Tickets extends ListenerAdapter {
                     break;
                 }
                 case ("accept-ticket3"): {
-                    if (event.getMember().getRoles().contains(guild.getRoleById(ROLE_MODERATOR)) || event.getMember().getRoles().contains(guild.getRoleById(ROLE_MODERATOR_CONTROL)) || event.getMember().getRoles().contains(guild.getRoleById(ROLE_ADMINISTRATOR))) {
-                        TextChannel textChannel = event.getChannel().asTextChannel();
-                        Ticket ticket = ticketRepository.getTicketById(textChannel.getIdLong());
+                    TextChannel textChannel = event.getChannel().asTextChannel();
+                    Ticket ticket = ticketRepository.getTicketById(textChannel.getIdLong());
+                    if ((event.getMember().getRoles().contains(guild.getRoleById(ROLE_MODERATOR)) && ticket.getTypeProblem().equals("Нарушение")) || (event.getMember().getRoles().contains(guild.getRoleById(ROLE_MODERATOR_CONTROL)) && ticket.getTypeProblem().equals("Нарушение")) ||
+                            event.getMember().getRoles().contains(guild.getRoleById(ROLE_ADMINISTRATOR)) || (event.getMember().getRoles().contains(guild.getRoleById(SUPPORT_CONTROL_ROLE)) && ticket.getTypeProblem().equals("Вопрос")) || (event.getMember().getRoles().contains(guild.getRoleById(SUPPORT_ROLE)) && ticket.getTypeProblem().equals("Вопрос"))) {
                         if (ticket.getModerator() == null) {
-                            ticket.addModerator(event.getMember().getIdLong());
+                            ticket.setModerator(userRepository.getUserById(event.getMember().getIdLong()));
                             ticketRepository.save(ticket);
                             textChannel.sendMessage("<@" + event.getMember().getId() + "> будет решать данный вопрос").queue();
                             event.deferReply(true).setContent("Тикет принят в работу!\nУтёнок настоятельно просит соблюдать в обсуждении все правила Дискорда и сервера." +
                                     "\nНе забудь после решения вопроса отправить отчёт. <a:1907duckwow:1238511205316820992> ").queue();
                         } else {
-                            event.deferReply(true).setContent("Над данным тикетом уже работает <@" + ticket.getModerator() + ">").queue();
+                            event.deferReply(true).setContent("Над данным тикетом уже работает <@" + ticket.getModerator().getId() + ">").queue();
                         }
                     } else {
-                        event.deferReply(true).setContent("Принять тикет может только участник с ролью модератора и выше.\nПожалуйста, дождитесь, пока данным вопросом займутся").queue();
+                        String role = "";
+                        if (Objects.equals(ticket.getTypeProblem(), "Нарушение")) role = "модератора";
+                        else role = "саппорта";
+                        event.deferReply(true).setContent("Принять тикет может только участник с ролью " + role + " и выше.\nПожалуйста, дождитесь, пока данным вопросом займутся").queue();
                     }
                     break;
                 }
@@ -121,7 +114,7 @@ public class Tickets extends ListenerAdapter {
                             "### **<@" + member.getIdLong() + "> хочет задать вопросик:**\n" +
                             ">>> " + description + "\n " +
                             "\n";
-                    SystemMessage.sendMessageInTicket(newChannel, message);
+                    SystemMessage.sendMessageInTicket(newChannel, message, SUPPORT_ROLE);
                     ticketRepository.save(new Ticket(newChannel.getIdLong(), userRepository.getUserById(member.getIdLong()), "Вопрос", description));
                     event.deferReply(true).setContent("Перейди в -> <#" + newChannel.getId() + "> для обсуждения вопросика").queue();
                     break;
@@ -146,7 +139,7 @@ public class Tickets extends ListenerAdapter {
                                     "<@" + idUserProblem + ">";
                         }
                     }
-                    SystemMessage.sendMessageInTicket(newChannel, message);
+                    SystemMessage.sendMessageInTicket(newChannel, message, ROLE_MODERATOR);
                     ticketRepository.save(new Ticket(newChannel.getIdLong(), userRepository.getUserById(member.getIdLong()), "Нарушение", description));
                     event.deferReply(true).setContent("Перейди в -> <#" + newChannel.getId() + "> для обсуждения нарушения").queue();
                     break;
@@ -168,20 +161,11 @@ public class Tickets extends ListenerAdapter {
                             "\n";
                     if (!commandModal.getAsString().isEmpty()) {
                         if (!CheckServer.checkCommandOnServer(command)) {
-                            String id = null;
-                            try {
-                                id = CheckServer.getIdCommandOnServer(command);
-                            } catch (ExecutionException e) {
-                                throw new RuntimeException(e);
-                            } catch (InterruptedException e) {
-                                throw new RuntimeException(e);
-                            }
-                            if (id != null)
-                                message += "### Команда, с которой возникла проблема:\n" +
-                                        "</" + command + ":" + id + ">";
+                            message += "### Команда, с которой возникла проблема:\n" +
+                                    "/" + command;
                         }
                     }
-                    SystemMessage.sendMessageInTicket(newChannel, message);
+                    SystemMessage.sendMessageInTicket(newChannel, message, ROLE_DEVELOPER);
                     ticketRepository.save(new Ticket(newChannel.getIdLong(), userRepository.getUserById(member.getIdLong()), "Баг", description));
                     event.deferReply(true).setContent("Перейди в -> <#" + newChannel.getId() + "> для обсуждения бага").queue();
                     break;
@@ -194,6 +178,11 @@ public class Tickets extends ListenerAdapter {
                     ticket.setSolution(solution);
                     ticket.setDateClose(new Date());
                     ticketRepository.save(ticket);
+                    if (ticket.getTypeProblem().equals("Нарушение")) {
+                        SystemMessage.sendReportModerationTicket(getEmbedTicket(ticket, "Модератор"));
+                    } else if (ticket.getTypeProblem().equals("Вопрос")) {
+                        SystemMessage.sendReportSupportTicket(getEmbedTicket(ticket, "Саппорт"));
+                    }
                     event.deferReply(false).setContent("Тикет успешно закрыт").queue();
                     textChannel.delete().queue();
                     break;
@@ -204,10 +193,27 @@ public class Tickets extends ListenerAdapter {
         }
     }
 
+    public EmbedBuilder getEmbedTicket(Ticket ticket, String role) {
+        EmbedBuilder embedBuilder = new EmbedBuilder();
+        embedBuilder.setColor(Color.orange);
+        embedBuilder.setTitle("Тикет «" + ticket.getTypeProblem() + "-" + guild.getMemberById(ticket.getUser().getId()).getEffectiveName() + "» закрыт!");
+        embedBuilder.setDescription("<t:" + ticket.getDateCreate().getTime() / 1000 + ":f> - <t:" + ticket.getDateClose().getTime() / 1000 + ":f>");
+        embedBuilder.addField(ticket.getTypeProblem() + ":", "> " + ticket.getDescriptionProblem(), false);
+        embedBuilder.addField("Решение:", "> " + ticket.getSolution(), false);
+        embedBuilder.addField(role + ":", "> " + "<@" + ticket.getModerator().getId() + ">", false);
+        return embedBuilder;
+    }
+
+
     public void viewTicketForUser(Member member, TextChannel textChannel) {
         long allow = Permission.VIEW_CHANNEL.getRawValue(); //разрешение писать в тиките пользователю
         long deny = 0; // нет запрещений
         textChannel.getManager().putPermissionOverride(member, allow, deny).queue();
+    }
+
+    public void notViewTicketForRole(long role, TextChannel textChannel) {
+        textChannel.getManager().clearOverridesAdded().queue();
+        //textChannel.getManager().putRolePermissionOverride(role, 0, Permission.VIEW_CHANNEL.getRawValue()).queue();
     }
 
 
@@ -258,15 +264,14 @@ public class Tickets extends ListenerAdapter {
                     event.replyModal(modal.build()).queue();
                     break;
                 }
-                case("select-add-user-in-ticket3"):{
+                case ("select-add-user-in-ticket3"): {
                     List values = event.getValues();
                     Member addMember = (Member) values.get(0);
                     TextChannel textChannel = event.getChannel().asTextChannel();
-                    if(!textChannel.getMembers().contains(addMember)){
+                    if (!textChannel.getMembers().contains(addMember)) {
                         viewTicketForUser(addMember, textChannel);
-                        event.deferReply(false).setContent("<@"+addMember.getIdLong()+"> успешно добавлен к обсуждению").queue();
-                    }
-                    else {
+                        event.deferReply(false).setContent("<@" + addMember.getIdLong() + "> успешно добавлен к обсуждению").queue();
+                    } else {
                         event.deferReply(true).setContent("Данный пользователь уже добавлен к обсуждению").queue();
                     }
                     break;

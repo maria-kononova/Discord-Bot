@@ -1,12 +1,12 @@
-package com.example.bot;
+package com.example.bot.listeners;
 
+import com.example.bot.SystemMessage;
 import com.example.bot.entity.User;
 import com.example.bot.entity.VoiceChannel;
 import com.example.bot.repository.VoiceChannelRepository;
 import jakarta.validation.constraints.NotNull;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.PermissionOverride;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.channel.concrete.Category;
 import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
@@ -22,20 +22,17 @@ import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import net.dv8tion.jda.api.interactions.modals.Modal;
 import net.dv8tion.jda.api.interactions.modals.ModalMapping;
-import net.dv8tion.jda.api.requests.restaction.AuditableRestAction;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 
 import static com.example.bot.BotApplication.guild;
-import static com.example.bot.BotCommands.userRepository;
-import static com.example.bot.SystemMessage.YOUR_VOICE_ROOM_EDIT;
+import static com.example.bot.listeners.BotCommands.userRepository;
 
 @Transactional
 @Service
@@ -50,9 +47,8 @@ public class VoiceRoomListener extends ListenerAdapter {
         if (event.getButton().getId().equals("yes-button")) {
             event.reply("ok").queue();
         }
-
-        User user = userRepository.getUserById(event.getUser().getIdLong());
         if (event.getButton().getId().contains("voice1")) {
+            User user = userRepository.getUserById(event.getUser().getIdLong());
             if (checkUserForIntrButton(user)) {
                 switch (event.getButton().getId()) {
                     //изменение название команты
