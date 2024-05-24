@@ -36,7 +36,6 @@ public class UpdateServer extends ListenerAdapter {
     @Async
     public void refreshPricingParameters() {
         if (guild != null){
-
             List<VoiceChannel> channels = guild.getVoiceChannels();
             for(VoiceChannel channel : channels){
                 List<Member> members = channel.getMembers();

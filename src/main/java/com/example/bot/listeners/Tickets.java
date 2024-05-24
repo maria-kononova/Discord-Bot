@@ -108,7 +108,7 @@ public class Tickets extends ListenerAdapter {
                     assert descriptionModal != null;
                     String description = descriptionModal.getAsString();
                     Member member = event.getMember();
-                    TextChannel newChannel = guild.createTextChannel("❔Вопрос-" + member.getUser().getName(), guild.getCategoryById(TICKET_CATEGORY)).complete();
+                    TextChannel newChannel = guild.createTextChannel("❔Вопрос-" + member.getUser().getEffectiveName(), guild.getCategoryById(TICKET_CATEGORY)).complete();
                     viewTicketForUser(member, newChannel);
                     String message = "## <a:9082443297d2ff80151793324186bc42:1238970002472833026> Появился вопрос\n" +
                             "### **<@" + member.getIdLong() + "> хочет задать вопросик:**\n" +
@@ -124,7 +124,7 @@ public class Tickets extends ListenerAdapter {
                     assert descriptionModal != null;
                     String description = descriptionModal.getAsString();
                     Member member = event.getMember();
-                    TextChannel newChannel = guild.createTextChannel("❗Нарушение-" + member.getUser().getName(), guild.getCategoryById(TICKET_CATEGORY)).complete();
+                    TextChannel newChannel = guild.createTextChannel("❗Нарушение-" + member.getUser().getEffectiveName(), guild.getCategoryById(TICKET_CATEGORY)).complete();
                     viewTicketForUser(member, newChannel);
                     String message = "## <a:030e86761180bea617468b23054fb357:1238969991093682186>  Поймано нарушение\n" +
                             "### **<@" + member.getIdLong() + "> сообщает о проблеме с пользователем:**\n" +
@@ -149,7 +149,7 @@ public class Tickets extends ListenerAdapter {
                     assert descriptionModal != null;
                     String description = descriptionModal.getAsString();
                     Member member = event.getMember();
-                    TextChannel newChannel = guild.createTextChannel("\uD83D\uDC7EБаг-" + member.getUser().getName(), guild.getCategoryById(TICKET_CATEGORY)).complete();
+                    TextChannel newChannel = guild.createTextChannel("\uD83D\uDC7EБаг-" + member.getUser().getEffectiveName(), guild.getCategoryById(TICKET_CATEGORY)).complete();
                     ModalMapping commandModal = event.getValue("command-problem3");
                     String command = commandModal.getAsString();
                     //разрешение для роли разработчика

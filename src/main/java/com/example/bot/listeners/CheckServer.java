@@ -58,15 +58,6 @@ public class CheckServer {
                 }
             }
             result = "Было обновлено команд: " + count;
-            //guild.updateCommands().queue();
-//            guild.upsertCommand("крякни", "Утёнку нужно учиться говорить").queue();
-//            guild.upsertCommand("монетки", "Узнай своё состояние")
-//                    .addOption(OptionType.STRING, "user", "Выбери пользователя").queue();
-//            guild.upsertCommand("мяу", "Попробуй, попробуй мяукни").queue();
-//            guild.upsertCommand("прогресс", "Утёнок покажет твой уровень").queue();
-//            guild.upsertCommand("проверка_пользователей", "Синхронизация пользователей сервера")
-//                    .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.MANAGE_CHANNEL, Permission.ADMINISTRATOR, )).queue();
-            //guild.updateCommands().queue();
         }
     }
 

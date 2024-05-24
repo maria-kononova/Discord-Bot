@@ -131,53 +131,52 @@ public class CrocodileGame extends ListenerAdapter {
                 }
                 case ("statistics-crocodile-game2"): {
                     EmbedBuilder embedBuilder = getStatisticsOfUser(event.getMember());
-                    if(embedBuilder != null){
+                    if (embedBuilder != null) {
                         Button button = Button.success("update-statistics-crocodile-game2", "Обновить");
                         event.deferReply(true).setEmbeds(getStatisticsOfUser(event.getMember()).build())
                                 .addActionRow(button)
                                 .queue();
-                    }
-                    else event.deferReply(true).setContent("Статистика отсутствует. Скорее присоединяйся к игре!").queue();
+                    } else
+                        event.deferReply(true).setContent("Статистика отсутствует. Скорее присоединяйся к игре!").queue();
                 }
                 case ("update-statistics-crocodile-game2"): {
                     event.deferEdit().setEmbeds(getStatisticsOfUser(event.getMember()).build()).queue();
                 }
-                case("best-players-crocodile-game2"):{
+                case ("best-players-crocodile-game2"): {
                     EmbedBuilder embedBuilder = getRatingsBestPlayers();
-                    if(embedBuilder != null){
+                    if (embedBuilder != null) {
                         Button button = Button.success("update-rating-crocodile-game2", "Обновить");
                         event.deferReply(true).setEmbeds(getRatingsBestPlayers().build())
                                 .addActionRow(button)
                                 .queue();
-                    }
-                    else event.deferReply(true).setContent("Рейтинг отсутствует. Скорее начинайте игру!").queue();
+                    } else event.deferReply(true).setContent("Рейтинг отсутствует. Скорее начинайте игру!").queue();
                 }
-                case("update-rating-crocodile-game2"):{
+                case ("update-rating-crocodile-game2"): {
                     event.deferEdit().setEmbeds(getRatingsBestPlayers().build()).queue();
                 }
             }
         }
     }
 
-    public EmbedBuilder getRatingsBestPlayers(){
+    public EmbedBuilder getRatingsBestPlayers() {
         List<Crocodile> crocodiles = getListCrocodileSortedByScore();
-        if(crocodiles.size() != 0){
+        if (crocodiles.size() != 0) {
             EmbedBuilder embedBuilder = new EmbedBuilder();
             embedBuilder.setColor(Color.decode("#248046"));
             embedBuilder.setTitle("Рейтинг игроков");
             int i = 1;
-            for(Crocodile crocodile : crocodiles){
-                if(i<=10){
-                    embedBuilder.addField(i + ". " + guild.getMemberById(crocodile.getUser().getId()).getEffectiveName(), "**Набранно очков:  " + crocodile.getScore() + "**", false );
+            for (Crocodile crocodile : crocodiles) {
+                if (i <= 10) {
+                    embedBuilder.addField(i + ". " + guild.getMemberById(crocodile.getUser().getId()).getEffectiveName(), "**Набранно очков:  " + crocodile.getScore() + "**", false);
                     i++;
-                }else break;
+                } else break;
             }
             return embedBuilder;
         }
         return null;
     }
 
-    public List<Crocodile> getListCrocodileSortedByScore(){
+    public List<Crocodile> getListCrocodileSortedByScore() {
         List<Crocodile> crocodiles = crocodileRepository.findAll();
         Comparator<Crocodile> comparator = Comparator.comparing(Crocodile::getScore);
         crocodiles.sort(comparator);
@@ -193,7 +192,14 @@ public class CrocodileGame extends ListenerAdapter {
             embedBuilder.setColor(Color.decode("#248046"));
             embedBuilder.setTitle("Статистика  " + member.getEffectiveName());
             embedBuilder.setThumbnail("https://media.tenor.com/B-h20huQWAYAAAAi/hide-water.gif");
-            embedBuilder.setDescription("### Топ:   **" + 1 + "**  |||  Рейтинг:   **" + crocodile.getScore() + "**");
+            int top = 0;
+            for (int i = 0; i < getListCrocodileSortedByScore().size(); i++) {
+                if (getListCrocodileSortedByScore().get(i).getUser().getId().equals(member.getIdLong())) {
+                    top = i + 1;
+                    break;
+                }
+            }
+            embedBuilder.setDescription("### Топ:   **" + top + "**  |||  Рейтинг:   **" + crocodile.getScore() + "**");
             embedBuilder.addField("Отгадано слов:", "> **" + String.valueOf(crocodile.getGuessedWords()) + "**", true);
             embedBuilder.addField("Загадано слов:", "> **" + String.valueOf(crocodile.getSetWords()) + "**", true);
             embedBuilder.addField("Штрафы:", "> **" + String.valueOf(crocodile.getPenalty()) + "**", true);

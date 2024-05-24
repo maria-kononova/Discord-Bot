@@ -29,19 +29,21 @@ public class ShopListener extends ListenerAdapter {
             if (event.getButton().getId().contains("buy-button-shop7-")) {
                 User user = userRepository.getUserById(event.getMember().getIdLong());
                 Roles role = rolesRepository.getRolesById(Long.parseLong(event.getButton().getId().split("-")[3]));
-                if (user.getCoins() >= role.getCoins()) {
-                    user.updateCoins(role.getCoins() * -1);
-                    userRepository.save(user);
-                    Shop shop = new Shop(user, role);
-                    shopRepository.save(shop);
+                if (shopRepository.getByBuyerAndRole(user, role) == null) {
+                    if (user.getCoins() >= role.getCoins()) {
+                        user.updateCoins(role.getCoins() * -1);
+                        userRepository.save(user);
+                        Shop shop = new Shop(user, role);
+                        shopRepository.save(shop);
 
-                    Button backButton = Button.secondary("back-button-shop7", "Назад").withEmoji(guild.getEmojiById(EMOJI_PREV));
-                    Button wearButton = Button.primary("wear-button-shop7-" + role.getId(), "Надеть");
-                    Button stockButton = Button.primary("stock-button-shop7", "Инвентарь");
+                        Button backButton = Button.secondary("back-button-shop7", "Назад").withEmoji(guild.getEmojiById(EMOJI_PREV));
+                        Button wearButton = Button.primary("wear-button-shop7-" + role.getId(), "Надеть");
+                        Button stockButton = Button.primary("stock-button-shop7", "Инвентарь");
 
-                    event.deferEdit().setEmbeds(getAcceptShopMsg(event.getMember(), role).build()).setActionRow(backButton, wearButton, stockButton).queue();
-                } else
-                    event.deferReply(true).setContent("Не хватает монеток :с\nМонетки заработать очень легко! Достаточно просто быть чуть активнее на сервере.\nПиши больше сообщений, общайся в голосовых каналах или поучавствуй в ивенте!").queue();
+                        event.deferEdit().setEmbeds(getAcceptShopMsg(event.getMember(), role).build()).setActionRow(backButton, wearButton, stockButton).queue();
+                    } else
+                        event.deferReply(true).setContent("Не хватает монеток :с\nМонетки заработать очень легко! Достаточно просто быть чуть активнее на сервере.\nПиши больше сообщений, общайся в голосовых каналах или поучавствуй в ивенте!").queue();
+                } else event.deferReply(true).setContent("Данная роль уже есть в твоём инвентаре!").queue();
             } else if (event.getButton().getId().contains("wear-button-shop7-")) {
                 Roles role = rolesRepository.getRolesById(Long.parseLong(event.getButton().getId().split("-")[3]));
                 wearRole(event.getMember(), role);
